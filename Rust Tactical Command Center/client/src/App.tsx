@@ -10,19 +10,19 @@ import Landing from "@/pages/landing";
 import { useAuth } from "@/hooks/useAuth";
 
 function AuthenticatedRouter() {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  // const { user, isLoading, isAuthenticated } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+  //       <div className="text-white text-xl">Loading...</div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <Switch>
-      <Route path="/" component={isAuthenticated ? TacticalMap : Landing} />
+      <Route path="/" component={TacticalMap} />
       <Route path="/tactical-map" component={TacticalMap} />
       <Route path="/icon-demo" component={IconDemo} />
       <Route component={NotFound} />

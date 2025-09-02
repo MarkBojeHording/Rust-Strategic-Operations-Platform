@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Setup authentication first
-try {
+/* try {
   await setupAuth(app);
   console.log("✓ Authentication setup complete");
 } catch (error) {
@@ -22,7 +22,7 @@ try {
     "⚠ Authentication setup failed, continuing without auth:",
     error,
   );
-}
+} */
 
 app.use((req, res, next) => {
   const start = Date.now();
