@@ -5,7 +5,7 @@ modules = ["nodejs-20", "web", "python-3.12"]
 channel = "stable-25_05"
 
 [workflows]
-runButton = "Start Base Design Studio"
+runButton = "Start Tactical Command Center"
 
 [[workflows.workflow]]
 name = "Run Tactical Command Center"
@@ -88,6 +88,19 @@ args = "cd \"Rust Base Design Studio\" && npm install"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd \"Rust Base Design Studio\" && node server.js"
+
+[[workflows.workflow]]
+name = "Start Tactical Command Center"
+author = 47018196
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd \"Rust Tactical Command Center\" && npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd \"Rust Tactical Command Center\" && npm run dev"
 
 [[ports]]
 localPort = 5000
