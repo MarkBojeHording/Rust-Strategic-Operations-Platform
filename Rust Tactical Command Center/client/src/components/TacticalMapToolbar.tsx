@@ -1,6 +1,6 @@
 import { memo, useState, useEffect } from 'react'
 import WipeCountdownTimer from './WipeCountdownTimer'
-import { Calculator, Users, FileText, TrendingUp, Settings, Bot, Target, Wifi, WifiOff, LogOut } from 'lucide-react'
+import { Calculator, Users, FileText, TrendingUp, Settings, Bot, Target, Wifi, WifiOff, LogOut, Shield } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { TeamManagementModal } from './TeamManagementModal'
 import { PlayerModal } from './PlayerModal'
