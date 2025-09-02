@@ -5,10 +5,10 @@
  */
 
 // PNG Asset Imports
-import rifleBoltPng from '@assets/rifle.bolt.png'
-import oreteaPurePng from '@assets/oretea.pure_1756547259710.png'
-import syringeMedicalPng from '@assets/syringe.medical_1756547259710.png'
-import hazmatsuitPng from '@assets/hazmatsuit_1756547259711.png'
+import rifleBoltPng from '@assets/icons/rifle.bolt.png'
+import oreteaPurePng from '@assets/icons/oretea.pure.png'
+import syringeMedicalPng from '@assets/icons/syringe.medical.png'
+import hazmatsuitPng from '@assets/icons/hazmatsuit.png'
 import metalFacemaskPng from '@assets/icons/metal.facemask.png'
 
 // Task Report Icons - Used on map overlay for active tasks
