@@ -1,3 +1,4 @@
+
 // Selection management module
 
 class SelectionManager {
@@ -12,6 +13,7 @@ class SelectionManager {
             securityGate: null,
             singlePost: null
         };
+        this.initialized = true;
     }
     
     deselectAll(allItems = []) {
@@ -64,7 +66,7 @@ class SelectionManager {
     }
 }
 
-// Export class
+// Export for both browser and Node.js environments
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = SelectionManager;
 } else if (typeof window !== 'undefined') {

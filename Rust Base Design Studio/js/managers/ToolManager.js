@@ -1,3 +1,4 @@
+
 // Tool management module
 
 class ToolManager {
@@ -12,6 +13,7 @@ class ToolManager {
             garageDoor: null,
             securityGate: null
         };
+        this.initialized = true;
     }
     
     init(buttonElements) {
@@ -21,7 +23,9 @@ class ToolManager {
     
     attachEventListeners() {
         Object.entries(this.toolButtons).forEach(([tool, btn]) => {
-            btn.addEventListener('click', () => this.selectTool(tool));
+            if (btn) {
+                btn.addEventListener('click', () => this.selectTool(tool));
+            }
         });
     }
     
@@ -30,10 +34,12 @@ class ToolManager {
         this.clearAllGhosts();
         
         Object.entries(this.toolButtons).forEach(([tool, btn]) => {
-            btn.classList.toggle('active', tool === toolName);
+            if (btn) {
+                btn.classList.toggle('active', tool === toolName);
+            }
         });
         
-        const canvas = document.getElementById('canvas');
+        const canvas = document.getElementById('mapCanvas');
         if (canvas) {
             canvas.style.cursor = 'crosshair';
         }
@@ -48,19 +54,21 @@ class ToolManager {
     clearTool() {
         this.currentTool = null;
         this.clearAllGhosts();
-        Object.values(this.toolButtons).forEach(btn => btn.classList.remove('active'));
+        Object.values(this.toolButtons).forEach(btn => {
+            if (btn) btn.classList.remove('active');
+        });
     }
     
     isEdgeTool(toolName = this.currentTool) {
-        return ['wall', 'wall2', 'reinforcedWall', 'door', 'securityGate'].includes(toolName);
+        return ['wall', 'window', 'reinforcedWall', 'door', 'securityGate'].includes(toolName);
     }
     
     isShapeTool(toolName = this.currentTool) {
         return ['square', 'triangle', 'square2'].includes(toolName);
     }
     
-    setGhost(type, object) {
-        this.ghostObjects[type] = object;
+    setGhost(type, ghost) {
+        this.ghostObjects[type] = ghost;
     }
     
     getGhost(type) {
@@ -68,7 +76,9 @@ class ToolManager {
     }
 }
 
-// Export class
+// Export for both browser and Node.js environments
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ToolManager;
+} else if (typeof window !== 'undefined') {
+    window.ToolManager = ToolManager;
 }
