@@ -67,4 +67,6 @@ class SelectionManager {
 // Export class
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = SelectionManager;
+} else if (typeof window !== 'undefined') {
+    window.SelectionManager = SelectionManager;
 }
