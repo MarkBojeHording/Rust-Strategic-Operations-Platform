@@ -29,28 +29,17 @@ export function TeamsModal({ isOpen, onClose, locations, players, onOpenBaseModa
     location.type === 'enemy-large'
   )
 
-  // Fetch reports data
-  const { data: reportsData, isLoading: reportsLoading, error: reportsError } = useQuery({
-    queryKey: ['reports'],
+  // Fetch reports data - simplified approach to avoid React internal errors
+  const { data: reports = [] } = useQuery({
+    queryKey: ['teams-modal-reports'],
     queryFn: async () => {
-      try {
-        const response = await fetch('/api/reports')
-        if (!response.ok) {
-          return []
-        }
-        return await response.json()
-      } catch (error) {
-        console.warn('Failed to fetch reports:', error)
-        return []
-      }
+      const response = await fetch('/api/reports')
+      return response.ok ? response.json() : []
     },
+    enabled: isOpen,
     staleTime: 30000,
-    refetchInterval: 30000,
-    retry: 1,
-    enabled: isOpen
+    retry: false
   })
-
-  const reports = useMemo(() => reportsData || [], [reportsData])
 
   const getBaseIcon = (type: string) => {
     const IconComponent = ICON_MAP[type as keyof typeof ICON_MAP] || Tent
