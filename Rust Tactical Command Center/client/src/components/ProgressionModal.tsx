@@ -41,15 +41,15 @@ const calculateGeneQuality = (gene: string): number => {
 // Find best gene for a plant type using same logic as gene calculator
 const findBestGeneForPlant = (genesArray: string[]): string | null => {
   if (!genesArray || genesArray.length === 0) return null
-  
+
   let bestGene = genesArray[0]
   let bestScore = calculateGeneQuality(bestGene)
   let bestGYCount = bestGene.split('').filter((g: string) => ['G', 'Y'].includes(g)).length
-  
+
   genesArray.forEach((gene: string) => {
     const score = calculateGeneQuality(gene)
     const gyCount = gene.split('').filter((g: string) => ['G', 'Y'].includes(g)).length
-    
+
     // Update best if this gene has a higher score, or same score but more G/Y genes
     if (score > bestScore || (score === bestScore && gyCount > bestGYCount)) {
       bestScore = score
@@ -57,7 +57,7 @@ const findBestGeneForPlant = (genesArray: string[]): string | null => {
       bestGYCount = gyCount
     }
   })
-  
+
   return bestGene
 }
 
@@ -78,15 +78,15 @@ interface GeneDataResult {
 const fetchGeneticDataFromAPI = async (): Promise<GeneDataResult> => {
   try {
     console.log('Fetching genetic data from API...')
-    
+
     const response = await fetch('/api/genetic-data')
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
-    
+
     const apiData = await response.json()
     console.log('API genetic data:', apiData)
-    
+
     const result: GeneDataResult = {
       hemp: { bestGene: null, progress: 0 },
       blueberry: { bestGene: null, progress: 0 },
@@ -94,7 +94,7 @@ const fetchGeneticDataFromAPI = async (): Promise<GeneDataResult> => {
       redberry: { bestGene: null, progress: 0 },
       pumpkin: { bestGene: null, progress: 0 }
     }
-    
+
     // Process API data
     apiData.forEach((plantData: any) => {
       const plantKey = plantData.plantType as keyof GeneDataResult
@@ -105,7 +105,7 @@ const fetchGeneticDataFromAPI = async (): Promise<GeneDataResult> => {
         }
       }
     })
-    
+
     return result
   } catch (e) {
     console.error('Failed to fetch genetic data from API:', e)
@@ -123,7 +123,7 @@ const fetchGeneticDataFromAPI = async (): Promise<GeneDataResult> => {
 const saveGeneticDataToAPI = async (plantType: string, genes: string[], progress: number, bestGene: string | null) => {
   try {
     console.log(`Saving genetic data for ${plantType}:`, { genes, progress, bestGene })
-    
+
     const response = await fetch('/api/genetic-data', {
       method: 'POST',
       headers: {
@@ -136,11 +136,11 @@ const saveGeneticDataToAPI = async (plantType: string, genes: string[], progress
         bestGene
       })
     })
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
-    
+
     const result = await response.json()
     console.log(`Saved genetic data for ${plantType}:`, result)
     return result
@@ -154,7 +154,7 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
   const [aloneWeapon, setAloneWeapon] = useState('Spear')
   const [counteringWeapon, setCounteringWeapon] = useState('Spear')
   const [displayOnMap, setDisplayOnMap] = useState(false)
-  
+
   // Query genetic data from database using React Query
   const { data: geneData, isLoading, refetch } = useQuery({
     queryKey: ['/api/genetic-data'],
@@ -170,9 +170,9 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
       pumpkin: { bestGene: null, progress: 0 }
     }
   })
-  
+
   const weaponOptions = ['Spear', 'Bow', 'DB', 'P2', 'SAR', 'Tommy', 'MP-5', 'AK-47', 'M249']
-  
+
   // Function to restore previously synced gene data to database
   const restorePreviousGeneData = async () => {
     try {
@@ -186,7 +186,7 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
       await saveGeneticDataToAPI('redberry', ['HHYYGG'], 67, 'HHYYGG')
       // Save pumpkin data (empty)
       await saveGeneticDataToAPI('pumpkin', [], 0, null)
-      
+
       // Refetch the data to update the UI
       await refetch()
       console.log('Restored previous gene data to database')
@@ -205,13 +205,13 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
         { type: 'redberry', genes: ['WWWXXY', 'YHGHGY', 'GYYYYY'], progress: 23 },
         { type: 'pumpkin', genes: ['HHHHWW', 'GGGGGG', 'YGYGYW'], progress: 91 }
       ]
-      
+
       // Save each plant's data to the database
       for (const plant of testData) {
         const bestGene = findBestGeneForPlant(plant.genes)
         await saveGeneticDataToAPI(plant.type, plant.genes, plant.progress, bestGene)
       }
-      
+
       // Refetch the data to update the UI
       await refetch()
       console.log('Added test gene data to database')
@@ -219,21 +219,21 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
       console.error('Failed to add test gene data:', e)
     }
   }
-  
+
   const clearTestGeneData = async () => {
     try {
       const confirm = window.confirm('This will clear all gene progress data. Are you sure?')
       if (!confirm) return
-      
+
       // Clear all genetic data from the database
       const response = await fetch('/api/genetic-data', {
         method: 'DELETE'
       })
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
+
       // Refetch to update the UI
       await refetch()
       console.log('Cleared all gene data from database')
@@ -241,7 +241,7 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
       console.error('Failed to clear gene data:', e)
     }
   }
-  
+
   // Function to manually request data from open gene calculator popup
   const requestDataFromPopup = () => {
     try {
@@ -249,13 +249,13 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
       const popup = (window as any).geneCalculatorPopup
       if (popup && !popup.closed) {
         console.log('Found open gene calculator popup via stored reference, requesting data...')
-        
+
         // Send a message to the popup requesting its current data
         popup.postMessage({
           type: 'REQUEST_GENE_DATA',
           timestamp: Date.now()
         }, '*')
-        
+
         console.log('Sent data request to popup')
       } else {
         console.log('No open gene calculator popup found via stored reference')
@@ -266,7 +266,7 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
       alert('Error communicating with Gene Calculator. Please close and reopen it.')
     }
   }
-  
+
   // Refetch data when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -277,30 +277,30 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
   // Listen for gene calculator popup communication when modal is open
   useEffect(() => {
     if (!isOpen) return
-    
+
     // Listen for postMessage updates from the gene calculator popup
     const handleMessageFromPopup = async (event: MessageEvent) => {
       console.log('Received postMessage:', event.data)
-      
+
       if (event.data.type === 'GENE_DATA_UPDATE') {
         console.log('Processing gene data update from popup:', event.data)
-        
+
         try {
           const { geneData } = event.data.data
           if (geneData && geneData.plantGenes) {
             // Save each plant's data to the database
             const plantTypes = ['hemp', 'blueberry', 'yellowberry', 'redberry', 'pumpkin']
-            
+
             for (const plantType of plantTypes) {
               const genes = geneData.plantGenes[plantType] || []
               const isCurrentPlant = plantType === geneData.currentPlant
               const genesArray = isCurrentPlant ? geneData.genes || [] : genes
               const bestGene = findBestGeneForPlant(genesArray)
               const progress = genesArray.length > 0 ? 100 : 0
-              
+
               await saveGeneticDataToAPI(plantType, genesArray, progress, bestGene)
             }
-            
+
             // Refetch to update the UI
             await refetch()
             console.log('Saved gene data from popup to database')
@@ -309,16 +309,16 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
           console.error('Failed to save gene data from popup:', e)
         }
       }
-      
+
       if (event.data.type === 'GENE_PROGRESS_UPDATE') {
         console.log('Processing gene progress update from popup:', event.data)
-        
+
         try {
           const { progressData } = event.data.data
           if (progressData) {
             // Update progress for each plant type
             const plantTypes = ['hemp', 'blueberry', 'yellowberry', 'redberry', 'pumpkin']
-            
+
             for (const plantType of plantTypes) {
               const progress = progressData[plantType] || 0
               // Get existing data to preserve genes and bestGene
@@ -336,7 +336,7 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
                 await saveGeneticDataToAPI(plantType, [], progress, null)
               }
             }
-            
+
             // Refetch to update the UI
             await refetch()
             console.log('Updated gene progress from popup in database')
@@ -346,9 +346,9 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
         }
       }
     }
-    
+
     window.addEventListener('message', handleMessageFromPopup)
-    
+
     return () => {
       window.removeEventListener('message', handleMessageFromPopup)
     }
@@ -410,7 +410,7 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
                 <span className="text-orange-200 text-sm">Display on map</span>
               </div>
             </div>
-            
+
             <div className="flex justify-center gap-8">
               <div className="flex flex-col items-center">
                 <label className="text-orange-400 mb-2 font-mono">In a group</label>
@@ -475,7 +475,7 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
                   const plantData = geneData[plantKey]
                   const bestGene = plantData?.bestGene
                   const progressPercent = plantData?.progress || 0
-                  
+
                   return (
                     <div key={plant} className="space-y-2">
                       <div className="relative">
@@ -490,7 +490,7 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
                           <span className="text-orange-200 text-sm font-mono">{plantNames[plantKey]}</span>
                         </div>
                       </div>
-                      
+
                       {/* Best Gene Display with Timing */}
                       <div className="flex items-center justify-between text-xs">
                         {/* Clone timing on left */}
@@ -509,7 +509,7 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
                             </>
                           )}
                         </div>
-                        
+
                         {/* Best gene in center */}
                         <div className="flex justify-center">
                           {bestGene ? (
@@ -531,7 +531,7 @@ export function ProgressionModal({ isOpen, onClose, onProgressionDisplayChange }
                             <span className="text-gray-500 text-xs">None</span>
                           )}
                         </div>
-                        
+
                         {/* Harvest timing on right */}
                         <div className="text-center">
                           {bestGene && (
