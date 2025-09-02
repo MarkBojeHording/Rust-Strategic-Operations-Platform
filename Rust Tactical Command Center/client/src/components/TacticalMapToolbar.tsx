@@ -129,7 +129,11 @@ const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progression
                             onClick={(e) => {
                               e.preventDefault()
                               e.stopPropagation()
-                              handleMenuOptionClick(option)
+                              if (option === 'Admin control') {
+                                setAdminModalOpen(true)
+                              } else {
+                                handleMenuOptionClick(option)
+                              }
                             }}
                             className="block w-full text-left px-3 py-2 text-orange-100 hover:bg-orange-800/50 transition-colors duration-150 first:rounded-t last:rounded-b"
                             data-testid={`menu-option-${option.toLowerCase().replace(' ', '-')}`}
