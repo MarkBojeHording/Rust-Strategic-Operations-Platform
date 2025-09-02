@@ -22,7 +22,10 @@ const getOidcConfig = memoize(
   { maxAge: 3600 * 1000 }
 );
 
-export function getSession() {
+// Generate a session secret - in production this should be from environment variables
+const SESSION_SECRET = process.env.SESSION_SECRET || 'rust-ops-center-dev-secret-' + Math.random().toString(36);
+
+export const configureSession = () => {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
@@ -32,7 +35,7 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: SESSION_SECRET,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
@@ -42,7 +45,7 @@ export function getSession() {
       maxAge: sessionTtl,
     },
   });
-}
+};
 
 function updateUserSession(
   user: any,
@@ -68,7 +71,7 @@ async function upsertUser(
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
-  app.use(getSession());
+  app.use(configureSession());
   app.use(passport.initialize());
   app.use(passport.session());
 

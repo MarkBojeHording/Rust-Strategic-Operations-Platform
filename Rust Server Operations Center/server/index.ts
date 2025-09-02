@@ -7,6 +7,21 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Configure session middleware with proper secret
+import session from 'express-session';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'rust-ops-center-dev-secret-' + Math.random().toString(36);
+
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // Set to true in production with HTTPS
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
