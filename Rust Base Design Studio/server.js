@@ -2,6 +2,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const path = require('path');
 const cors = require('cors');
+const { initializeDatabase } = require('./server/db.js');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -10,11 +11,22 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('.'));
+app.use('/attached_assets', express.static('attached_assets'));
 
 // Database connection
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+// Test database connection
+pool.connect((err, client, release) => {
+    if (err) {
+        console.error('❌ Database connection error:', err);
+    } else {
+        console.log('✅ Database connected successfully');
+        release();
+    }
 });
 
 // Routes
@@ -112,6 +124,7 @@ app.get('/', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on port ${PORT}`);
+    await initializeDatabase();
 });

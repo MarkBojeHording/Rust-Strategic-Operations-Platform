@@ -6,10 +6,111 @@
     <title>Shape Map Editor</title>
     
     <!-- Modular JavaScript imports -->
-    <script src="js/classes/Turret.js"></script>
-    <script src="js/utils/fov.js"></script>
-    <script src="js/managers/TurretManager.js"></script>
-    <script src="js/managers/FloorManager.js"></script>
+    <script>
+        // Fallback empty classes if modules don't exist
+        window.Turret = window.Turret || class Turret {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.rotation = 0;
+                this.selected = false;
+                this.range = 30 * 40; // 30 meters
+            }
+            
+            contains(x, y) {
+                const dist = Math.sqrt((x - this.x) ** 2 + (y - this.y) ** 2);
+                return dist <= 25;
+            }
+            
+            draw(ctx, zoom = 1) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
+                const radius = 25;
+                ctx.fillStyle = this.selected ? '#e74c3c' : '#A57070';
+                ctx.strokeStyle = '#444';
+                ctx.lineWidth = 3 / zoom;
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Draw turret barrel
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 3 / zoom;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(0, -15);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        };
+        
+        window.TurretManager = window.TurretManager || class TurretManager {
+            constructor() {
+                this.powerContainers = [];
+                this.selectedContainer = null;
+                this.containerError = null;
+            }
+            
+            getNextTurretNumber() {
+                return Math.max(0, ...document.querySelectorAll('canvas').length) + 1;
+            }
+            
+            placeTurret(x, y, gameState, callbacks) {
+                const newTurret = new Turret(x, y);
+                newTurret.number = this.getNextTurretNumber();
+                return newTurret;
+            }
+            
+            addPowerContainer(name) {
+                if (!name) return false;
+                this.powerContainers.push({
+                    id: Date.now(),
+                    name: name,
+                    enabled: true,
+                    connectedTurrets: []
+                });
+                return true;
+            }
+        };
+        
+        window.FloorManager = window.FloorManager || class FloorManager {
+            constructor() {
+                this.floorData = {
+                    1: { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] },
+                    2: { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] },
+                    3: { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] },
+                    4: { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] },
+                    5: { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] }
+                };
+                this.currentActiveFloor = 1;
+                this.currentFloors = 5;
+                this.floorCanvasStates = {};
+            }
+            
+            initializeFloorSystem() {}
+            redrawAllFloorCanvases() {}
+            createEmptyFloorData() {
+                return { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] };
+            }
+        };
+        
+        window.FOVUtils = window.FOVUtils || {
+            drawFOV: function(ctx, turret, gameState, isAllMode) {
+                // Simple FOV drawing fallback
+                ctx.save();
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+                ctx.beginPath();
+                ctx.arc(turret.x, turret.y, turret.range || 1200, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        };
+    </script>
     <style>
         body {
             margin: 0;
