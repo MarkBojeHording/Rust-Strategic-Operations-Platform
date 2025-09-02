@@ -1,7 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { insertReportSchema, insertReportTemplateSchema, insertPremiumPlayerSchema, insertPlayerBaseTagSchema, insertPlayerProfileSchema, insertGeneticDataSchema, insertBattlemetricsServerSchema } from "@shared/schema";
+import { setupAuth, isAuthenticated } from "./replitAuth.js";
+import { storage } from "./storage.js";
+import {
+  createTeamSchema,
+  createUserSchema,
+  addTeamMemberSchema,
+} from "@shared/schema";
 import { battleMetricsService } from "./services/battlemetrics";
 import { webSocketManager } from "./services/websocketManager";
 
@@ -776,7 +781,255 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Note: Individual player routes removed - using external API for regular player data
+  // Add admin API routes for user and team management
+  // Authentication routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Team Management Routes - PROTECTED
+
+  // Get all users
+  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Create a new user
+  app.post('/api/admin/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const userData = createUserSchema.parse(req.body);
+      const user = await storage.createUser(userData);
+      res.status(201).json(user);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "Failed to create user" 
+      });
+    }
+  });
+
+  // Update user
+  app.put('/api/admin/users/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const userData = createUserSchema.partial().parse(req.body);
+      const user = await storage.updateUser(userId, userData);
+      res.json(user);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "Failed to update user" 
+      });
+    }
+  });
+
+  // Delete user (soft delete)
+  app.delete('/api/admin/users/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      await storage.deleteUser(userId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to delete user" 
+      });
+    }
+  });
+
+  // Get all teams
+  app.get('/api/admin/teams', isAuthenticated, async (req: any, res) => {
+    try {
+      const teams = await storage.getAllTeams();
+      res.json(teams);
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      res.status(500).json({ message: "Failed to fetch teams" });
+    }
+  });
+
+  // Create a new team
+  app.post('/api/admin/teams', isAuthenticated, async (req: any, res) => {
+    try {
+      const teamData = createTeamSchema.parse(req.body);
+      const currentUserId = req.user.claims.sub;
+
+      const team = await storage.createTeam({
+        ...teamData,
+        createdBy: currentUserId,
+      });
+
+      // Add creator as team owner
+      await storage.addTeamMember(team.id, currentUserId, 'owner');
+
+      res.status(201).json(team);
+    } catch (error) {
+      console.error("Error creating team:", error);
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "Failed to create team" 
+      });
+    }
+  });
+
+  // Update team
+  app.put('/api/admin/teams/:teamId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      const teamData = createTeamSchema.partial().parse(req.body);
+      const team = await storage.updateTeam(teamId, teamData);
+      res.json(team);
+    } catch (error) {
+      console.error("Error updating team:", error);
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "Failed to update team" 
+      });
+    }
+  });
+
+  // Delete team (soft delete)
+  app.delete('/api/admin/teams/:teamId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      await storage.deleteTeam(teamId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting team:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to delete team" 
+      });
+    }
+  });
+
+  // Get team members
+  app.get('/api/admin/teams/:teamId/members', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      const members = await storage.getTeamMembers(teamId);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+      res.status(500).json({ message: "Failed to fetch team members" });
+    }
+  });
+
+  // Add team member
+  app.post('/api/admin/teams/:teamId/members', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      const { userId, role } = addTeamMemberSchema.parse(req.body);
+      const member = await storage.addTeamMember(teamId, userId, role);
+      res.status(201).json(member);
+    } catch (error) {
+      console.error("Error adding team member:", error);
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "Failed to add team member" 
+      });
+    }
+  });
+
+  // Update team member role
+  app.put('/api/admin/teams/:teamId/members/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId, userId } = req.params;
+      const { role } = addTeamMemberSchema.parse(req.body);
+      const member = await storage.updateTeamMemberRole(teamId, userId, role);
+      res.json(member);
+    } catch (error) {
+      console.error("Error updating team member:", error);
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "Failed to update team member" 
+      });
+    }
+  });
+
+  // Remove team member
+  app.delete('/api/admin/teams/:teamId/members/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId, userId } = req.params;
+      await storage.removeTeamMember(teamId, userId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing team member:", error);
+      res.status(500).json({ 
+        message: error instanceof Error ? error.message : "Failed to remove team member" 
+      });
+    }
+  });
+
+  // Get user's teams
+  app.get('/api/users/:userId/teams', isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const teams = await storage.getUserTeams(userId);
+      res.json(teams);
+    } catch (error) {
+      console.error("Error fetching user teams:", error);
+      res.status(500).json({ message: "Failed to fetch user teams" });
+    }
+  });
+
+  // Map Storage API Endpoints
+
+  // Get cached map for a server
+  app.get("/api/map/:serverId", async (req, res) => {
+    try {
+      const { serverId } = req.params;
+      const mapData = await storage.getMapData(serverId);
+      if (mapData) {
+        res.json(mapData);
+      } else {
+        res.status(404).json({ error: "Map data not found for server" });
+      }
+    } catch (error) {
+      console.error("Error getting map data:", error);
+      res.status(500).json({ error: "Failed to get map data" });
+    }
+  });
+
+  // Save map data for a server
+  app.post("/api/map/:serverId", async (req, res) => {
+    try {
+      const { serverId } = req.params;
+      const mapData = req.body; // Assume mapData is sent in the request body
+      const savedMapData = await storage.saveMapData(serverId, mapData);
+      res.status(201).json(savedMapData);
+    } catch (error) {
+      console.error("Error saving map data:", error);
+      res.status(400).json({ error: "Failed to save map data" });
+    }
+  });
+
+  // Delete map data for a server
+  app.delete("/api/map/:serverId", async (req, res) => {
+    try {
+      const { serverId } = req.params;
+      const success = await storage.deleteMapData(serverId);
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Map data not found for server" });
+      }
+    } catch (error) {
+      console.error("Error deleting map data:", error);
+      res.status(500).json({ error: "Failed to delete map data" });
+    }
+  });
+
+  // Initialize Replit Authentication
+  setupAuth(app);
 
   const httpServer = createServer(app);
 

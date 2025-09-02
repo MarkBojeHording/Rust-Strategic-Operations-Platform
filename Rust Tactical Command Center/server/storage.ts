@@ -1,5 +1,33 @@
 import { type User, type InsertUser, type Report, type InsertReport, type ReportTemplate, type InsertReportTemplate, type PremiumPlayer, type InsertPremiumPlayer, type PlayerBaseTag, type InsertPlayerBaseTag, type PlayerProfile, type InsertPlayerProfile, type Teammate, type InsertTeammate, type GeneticData, type InsertGeneticData } from "@shared/schema";
 import { randomUUID } from "crypto";
+import {
+  type ActionReport,
+  type TeamData,
+  teamDataSchema,
+  type PlayerProfile,
+  type ServerData,
+  type BaseData,
+  type TaskReport,
+  type LogEntry,
+  type KitData,
+  type User,
+  type UpsertUser,
+  type DBTeam,
+  type InsertDBTeam,
+  type DBTeamMember,
+  type InsertDBTeamMember,
+  actionReports,
+  teamData,
+  playerProfiles,
+  serverData,
+  baseData,
+  taskReports,
+  logEntries,
+  kitData,
+  users,
+  teams,
+  teamMembers,
+} from "@shared/schema";
 
 // Utility function to generate consistent alphanumeric report IDs
 const generateReportDisplayId = () => {
@@ -83,8 +111,6 @@ export interface IStorage {
   // Player session management
   createPlayerSession(sessionData: any): Promise<any>;
   endPlayerSession(profileId: string, leaveTime: Date): Promise<boolean>;
-
-  // Note: Regular player data comes from external API, no local storage needed
 }
 
 import { db } from "./db";
