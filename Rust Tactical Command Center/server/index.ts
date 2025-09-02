@@ -4,6 +4,11 @@ import { setupAuth } from "./replitAuth.js";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedReportTemplates } from "./seed-templates";
 
+// Allow self-signed certificates in development
+if (process.env.NODE_ENV === "development") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -53,7 +58,12 @@ app.use((req, res, next) => {
   const server = await registerRoutes(app);
 
   // Seed report templates on startup
-  await seedReportTemplates();
+  try {
+    await seedReportTemplates();
+    console.log("✓ Report templates seeded successfully");
+  } catch (error) {
+    console.warn("⚠ Failed to seed report templates:", error);
+  }
 
   // Initialize WebSocket manager for BattleMetrics tracking
   try {
