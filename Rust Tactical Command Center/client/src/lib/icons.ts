@@ -9,7 +9,7 @@ import rifleBoltPng from '@assets/rifle.bolt.png'
 import oreteaPurePng from '@assets/oretea.pure_1756547259710.png'
 import syringeMedicalPng from '@assets/syringe.medical_1756547259710.png'
 import hazmatsuitPng from '@assets/hazmatsuit_1756547259711.png'
-import metalFacemaskPng from '@assets/metal.facemask_512_1756547259711.png'
+import metalFacemaskPng from '@assets/icons/metal.facemask.png'
 
 // Task Report Icons - Used on map overlay for active tasks
 export const TASK_ICONS = {
@@ -107,9 +107,9 @@ export const KIT_ICONS = {
     alt: 'Hazmat suit'
   },
   FULLKIT: {
-    emoji: '⚔️',
-    png: PNG_ASSETS.METAL_FACEMASK,
-    alt: 'Full combat kit'
+    emoji: '🛡️',
+    alt: 'Full kit with armor',
+    png: PNG_ASSETS.METAL_FACEMASK
   },
   MEDS: {
     emoji: '💊',
