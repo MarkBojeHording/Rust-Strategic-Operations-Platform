@@ -11,11 +11,13 @@ app.use(express.urlencoded({ extended: false }));
 // Setup authentication first
 try {
   await setupAuth(app);
-  console.log('✓ Authentication setup complete');
+  console.log("✓ Authentication setup complete");
 } catch (error) {
-  console.warn('⚠ Authentication setup failed, continuing without auth:', error);
+  console.warn(
+    "⚠ Authentication setup failed, continuing without auth:",
+    error,
+  );
 }
-
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -67,7 +69,7 @@ app.use((req, res, next) => {
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    console.error('Request error:', err);
+    console.error("Request error:", err);
   });
 
   // importantly only setup vite in development and after
@@ -91,10 +93,13 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const PORT = process.env.PORT || 5000;
-  server.listen({
-    port: PORT,
-    host: "0.0.0.0",
-  }, () => {
-    log(`serving on port ${PORT}`);
-  });
+  server.listen(
+    {
+      port: PORT,
+      host: "0.0.0.0",
+    },
+    () => {
+      log(`serving on port ${PORT}`);
+    },
+  );
 })();
