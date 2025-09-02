@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { X, Castle, Home, Tent, Shield, Wheat, FileText, Clock, Skull, Rocket, Users } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import type { ExternalPlayer } from '@shared/schema'
@@ -30,18 +30,27 @@ export function TeamsModal({ isOpen, onClose, locations, players, onOpenBaseModa
   )
 
   // Fetch reports data
-  const { data: reports = [] } = useQuery({
+  const { data: reportsData, isLoading: reportsLoading, error: reportsError } = useQuery({
     queryKey: ['reports'],
     queryFn: async () => {
-      const response = await fetch('/api/reports')
-      if (!response.ok) {
-        throw new Error('Failed to fetch reports')
+      try {
+        const response = await fetch('/api/reports')
+        if (!response.ok) {
+          return []
+        }
+        return await response.json()
+      } catch (error) {
+        console.warn('Failed to fetch reports:', error)
+        return []
       }
-      return response.json()
     },
     staleTime: 30000,
     refetchInterval: 30000,
+    retry: 1,
+    enabled: isOpen
   })
+
+  const reports = useMemo(() => reportsData || [], [reportsData])
 
   const getBaseIcon = (type: string) => {
     const IconComponent = ICON_MAP[type as keyof typeof ICON_MAP] || Tent
