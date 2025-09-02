@@ -350,7 +350,7 @@ export function PlayerModal({ isOpen, onClose, onOpenBaseModal }: PlayerModalPro
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-[1150px] min-w-[1150px] max-w-[1150px] h-[800px] bg-gray-900 border-2 border-orange-600/50 font-mono">
+        <DialogContent className="w-[920px] min-w-[920px] max-w-[920px] h-[560px] bg-gray-900 border-2 border-orange-600/50 font-mono">
           <DialogHeader>
             <DialogTitle className="text-orange-400 text-xl font-bold flex items-center gap-2 tracking-wider">
               <User className="w-5 h-5" />
@@ -411,7 +411,7 @@ export function PlayerModal({ isOpen, onClose, onOpenBaseModal }: PlayerModalPro
           <div className="space-y-4">
             {/* Session History View */}
             {selectedPlayer ? (
-              <div className="h-[650px] flex gap-4">
+              <div className="h-[410px] flex gap-4">
                 {/* Left Column - Session History */}
                 <div className="w-3/4 overflow-y-auto bg-gray-800 rounded-lg border border-gray-600 p-4">
                   <div className="mb-4">
@@ -627,7 +627,7 @@ export function PlayerModal({ isOpen, onClose, onOpenBaseModal }: PlayerModalPro
                 </div>
 
                 {/* Player List */}
-                <div className="h-[550px] overflow-y-auto bg-gray-800 rounded-lg border border-gray-600">
+                <div className="h-[310px] overflow-y-auto bg-gray-800 rounded-lg border border-gray-600">
                   {isLoading ? (
                     <div className="flex justify-center py-8">
                       <div className="text-gray-400">Loading players...</div>
