@@ -777,10 +777,12 @@
             margin: 0;
             padding: 5px;
             font-family: Arial, sans-serif;
-            background: url('attached_assets/BG_1755735419614.png') center center;
+            background: url('attached_assets/BG_1755735419614.png') center center, linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             background-size: cover;
             background-repeat: no-repeat;
             background-attachment: fixed;
+            min-height: 100vh;
+            color: #333;
         }
 
         .main-container {
@@ -798,12 +800,13 @@
         }
 
         .toolbar {
-            background: transparent;
+            background: rgba(255, 255, 255, 0.9);
             padding: 8px;
             border-radius: 4px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             width: 210px;
             position: relative;
+            backdrop-filter: blur(10px);
         }
 
         .toolbar::before {
@@ -813,7 +816,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: transparent;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 4px;
             z-index: 1;
         }
@@ -824,13 +827,15 @@
         }
 
         .canvas-container {
-            background: transparent;
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 4px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             padding: 5px;
             min-width: 940px;
+            backdrop-filter: blur(10px);
         }
 
+        .sidebar-panel {
             border-radius: 4px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             width: 200px;
@@ -870,7 +875,7 @@
 
         /* Custom styling for Square and Triangle buttons with new artwork */
         #squareBtn, #triangleBtn {
-            background: url('attached_assets/TextMode (4)_1755739881348.png') center center;
+            background: url('attached_assets/TextMode (4)_1755739881348.png') center center, linear-gradient(135deg, #4CAF50, #45a049);
             background-size: cover;
             color: #333;
             text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
