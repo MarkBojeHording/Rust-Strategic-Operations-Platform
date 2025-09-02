@@ -223,7 +223,7 @@ export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProp
     <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
       <div 
         className="bg-gray-900 border border-orange-600/50 shadow-2xl"
-        style={{ width: '1400px', height: '900px' }}
+        style={{ width: '840px', height: '540px' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-orange-600/30 bg-black/30">
@@ -242,7 +242,7 @@ export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProp
           {/* Top Section - 50% */}
           <div className="flex h-1/2">
             {/* Server Information Section - Fixed Width */}
-            <div className="w-[392px] flex-shrink-0 bg-gray-800 border-r border-gray-600 flex flex-col">
+            <div className="w-[235px] flex-shrink-0 bg-gray-800 border-r border-gray-600 flex flex-col">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide p-2 bg-black/30 border-b border-gray-600">
                 Server Information
               </h3>
@@ -509,12 +509,12 @@ export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProp
               <div 
                 ref={scrollContainerRef}
                 className="flex-1 overflow-x-auto overflow-y-hidden p-1 scroll-smooth"
-                style={{ maxWidth: 'calc(1400px - 392px - 20px)' }}
+                style={{ maxWidth: 'calc(840px - 235px - 20px)' }}
               >
                 <div className="flex h-full">
                   {/* Squad Cards */}
                   {squads.map((squad) => (
-                    <div key={squad.id} className="min-w-[280px] w-[280px] bg-gray-800 border-r border-gray-600 flex flex-col flex-shrink-0">
+                    <div key={squad.id} className="min-w-[168px] w-[168px] bg-gray-800 border-r border-gray-600 flex flex-col flex-shrink-0">
                     {/* Squad Header */}
                     <div className="bg-black/30 p-1.5 border-b border-gray-600 flex justify-between items-center">
                       <span className="text-gray-400 text-xs font-semibold">{squad.name}</span>
