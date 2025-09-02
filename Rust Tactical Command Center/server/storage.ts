@@ -88,7 +88,7 @@ export interface IStorage {
 }
 
 import { db } from "./db";
-import { reports, reportTemplates, premiumPlayers, playerBaseTags, playerProfiles as playerProfilesTable, teammates, geneticData, battlemetricsServers, playerProfiles, playerSessions } from "@shared/schema";
+import { users, reports, reportTemplates, premiumPlayers, playerBaseTags, playerProfiles as playerProfilesTable, teammates, geneticData, battlemetricsServers, playerProfiles, playerSessions } from "@shared/schema";
 import { eq, desc, asc, like, and, or, sql } from "drizzle-orm";
 
 export class DatabaseStorage implements IStorage {
@@ -294,32 +294,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPlayerProfile(playerName: string): Promise<PlayerProfile | undefined> {
-    const [profile] = await this.db
-      .select()
-      .from(playerProfilesTable)
-      .where(eq(playerProfilesTable.playerName, playerName));
-    return profile || undefined;
+    const [profile] = await this.db.select().from(playerProfiles).where(eq(playerProfiles.playerName, playerName));
+    return profile;
   }
 
-  async updatePlayerProfile(playerName: string, profile: Partial<InsertPlayerProfile>): Promise<PlayerProfile> {
+  async updatePlayerProfile(playerName: string, profile: Partial<InsertPlayerProfile>): Promise<PlayerProfile | undefined> {
     const [updatedProfile] = await this.db
-      .update(playerProfilesTable)
+      .update(playerProfiles)
       .set({
         ...profile,
         updatedAt: new Date()
       })
-      .where(eq(playerProfilesTable.playerName, playerName))
+      .where(eq(playerProfiles.playerName, playerName))
       .returning();
     return updatedProfile;
   }
 
   async getAllPlayerProfiles(): Promise<PlayerProfile[]> {
-    try {
-      return await this.db.select().from(playerProfilesTable);
-    } catch (error) {
-      console.error("Error getting player profiles:", error);
-      return [];
-    }
+    return await this.db.select().from(playerProfiles);
   }
 
   async deletePlayerProfile(playerName: string): Promise<boolean> {
