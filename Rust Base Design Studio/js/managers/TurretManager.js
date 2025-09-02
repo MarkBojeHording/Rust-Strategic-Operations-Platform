@@ -6,6 +6,7 @@ class TurretManager {
         this.powerContainers = [];
         this.selectedContainer = null;
         this.containerError = null;
+        this.initialized = true;
     }
     
     // Initialize global turret counter based on existing turrets
