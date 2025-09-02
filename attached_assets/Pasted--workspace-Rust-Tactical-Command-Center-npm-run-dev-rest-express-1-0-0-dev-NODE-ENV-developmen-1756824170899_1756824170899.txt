@@ -1,0 +1,57 @@
+/workspace/Rust Tactical Command Center$ npm run dev
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+(node:14904) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Authentication setup complete
+Failed to seed report templates: error: relation "report_templates" does not exist
+    at file:///home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/Rust Tactical Command Center/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getReportTemplateByType (/home/runner/workspace/Rust Tactical Command Center/server/storage.ts:252:24)
+    at async seedReportTemplates (/home/runner/workspace/Rust Tactical Command Center/server/seed-templates.ts:52:24)
+    at async <anonymous> (/home/runner/workspace/Rust Tactical Command Center/server/index.ts:62:5) {
+  length: 115,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '67',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1452',
+  routine: 'parserOpenTable'
+}
+✓ Report templates seeded successfully
+BattleMetrics WebSocket manager initialized
+2:41:13 PM [express] Setting up Vite development server...
+2:41:13 PM [express] Vite development server setup complete
+node:events:502
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:5001
+    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+    at listenInCluster (node:net:1965:12)
+    at doListen (node:net:2139:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1944:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 5001
+}
+
+Node.js v20.19.3

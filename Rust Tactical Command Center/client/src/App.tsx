@@ -6,12 +6,25 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import TacticalMap from "@/pages/tactical-map";
 import IconDemo from "@/pages/icon-demo";
 import NotFound from "@/pages/not-found";
+import Landing from "@/pages/landing";
+import { useAuth } from "@/hooks/useAuth";
 
-function Router() {
+function AuthenticatedRouter() {
+  // const { user, isLoading, isAuthenticated } = useAuth();
+
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+  //       <div className="text-white text-xl">Loading...</div>
+  //     </div>
+  //   );
+  // }
+
   return (
     <Switch>
-      <Route path="/" component={TacticalMap}/>
-      <Route path="/icon-demo" component={IconDemo}/>
+      <Route path="/" component={TacticalMap} />
+      <Route path="/tactical-map" component={TacticalMap} />
+      <Route path="/icon-demo" component={IconDemo} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -22,7 +35,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <AuthenticatedRouter />
       </TooltipProvider>
     </QueryClientProvider>
   );

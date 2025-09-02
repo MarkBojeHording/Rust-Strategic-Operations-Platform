@@ -1,5 +1,7 @@
+
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, jsonb, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, jsonb, boolean, uuid, index } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -7,6 +9,14 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role").default("user").notNull(), // user, admin, team_admin
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -100,19 +110,29 @@ export const insertPlayerBaseTagSchema = createInsertSchema(playerBaseTags).omit
 export type InsertPlayerBaseTag = z.infer<typeof insertPlayerBaseTagSchema>;
 export type PlayerBaseTag = typeof playerBaseTags.$inferSelect;
 
-// Player profiles table for storing aliases and notes
-export const playerProfiles = pgTable("player_profiles", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  playerName: text("player_name").notNull().unique(),
-  aliases: text("aliases").default(""), // Comma-separated aliases
-  notes: text("notes").default(""),
+// Team memberships table for linking users to teams
+export const teamMembers = pgTable("team_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  teamId: varchar("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: varchar("role").notNull().default("member"), // owner, admin, member
+  joinedAt: timestamp("joined_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => ({
+  teamUserIdx: index("team_user_idx").on(table.teamId, table.userId),
+  userTeamsIdx: index("user_teams_idx").on(table.userId),
+}));
 
-export const insertPlayerProfileSchema = createInsertSchema(playerProfiles).omit({ id: true, createdAt: true, updatedAt: true });
-export type InsertPlayerProfile = z.infer<typeof insertPlayerProfileSchema>;
-export type PlayerProfile = typeof playerProfiles.$inferSelect;
+// Session storage table for authentication
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
 
 // External player data structure to match your API
 export const externalPlayerSchema = z.object({
@@ -124,19 +144,118 @@ export const externalPlayerSchema = z.object({
 
 export type ExternalPlayer = z.infer<typeof externalPlayerSchema>;
 
-// Teams table for organizing enemy bases
+// Teams table for organizing enemy bases and team management
 export const teams = pgTable("teams", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  name: text("name").notNull(),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull().unique(),
+  description: text("description"),
   color: text("color").notNull(), // Hex color for team identification
   mainBaseId: text("main_base_id"), // ID of the main base for this team
   notes: text("notes").default(""),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdBy: varchar("created_by").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertTeamSchema = createInsertSchema(teams).omit({ id: true, createdAt: true });
-export type InsertTeam = z.infer<typeof insertTeamSchema>;
-export type Team = typeof teams.$inferSelect;
+// BattleMetrics servers table for tracking monitored servers
+export const battlemetricsServers = pgTable("battlemetrics_servers", {
+  id: text("id").primaryKey(), // BattleMetrics server ID
+  name: text("name").notNull(),
+  game: text("game").notNull(),
+  region: text("region"),
+  isSelected: boolean("is_selected").default(false), // Which server is currently being tracked
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+  lastChecked: timestamp("last_checked"),
+  isActive: boolean("is_active").default(true).notNull(),
+});
+
+// Player profiles table - enhanced with BattleMetrics integration
+export const playerProfiles = pgTable("player_profiles", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  playerName: text("player_name").notNull(),
+  battlemetricsId: text("battlemetrics_id"), // BattleMetrics player ID if available
+  serverId: text("server_id").references(() => battlemetricsServers.id),
+  
+  // Current status
+  isOnline: boolean("is_online").default(false).notNull(),
+  currentSessionStart: timestamp("current_session_start"),
+  
+  // Activity tracking
+  lastJoinTime: timestamp("last_join_time"),
+  lastLeaveTime: timestamp("last_leave_time"),
+  lastSeenTime: timestamp("last_seen_time").defaultNow().notNull(),
+  
+  // Statistics
+  totalSessions: integer("total_sessions").default(0).notNull(),
+  totalPlayTimeMinutes: integer("total_play_time_minutes").default(0).notNull(),
+  
+  // Legacy tactical features
+  aliases: text("aliases").default(""), // Comma-separated aliases for tactical intelligence
+  notes: text("notes").default(""), // Tactical notes
+  
+  // Metadata
+  firstSeenAt: timestamp("first_seen_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  serverPlayerIdx: index("server_player_idx").on(table.serverId, table.playerName),
+  lastSeenIdx: index("last_seen_idx").on(table.lastSeenTime),
+  onlineStatusIdx: index("online_status_idx").on(table.serverId, table.isOnline),
+  playerNameIdx: index("player_name_idx").on(table.playerName),
+}));
+
+// Player activities table - raw join/leave events for detailed logging
+export const playerActivities = pgTable("player_activities", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  profileId: text("profile_id").references(() => playerProfiles.id, { onDelete: "cascade" }),
+  sessionId: text("session_id").references(() => playerSessions.id, { onDelete: "cascade" }),
+  serverId: text("server_id").notNull().references(() => battlemetricsServers.id),
+  playerName: text("player_name").notNull(),
+  battlemetricsId: text("battlemetrics_id"), // BattleMetrics player ID if available
+  action: text("action").notNull(), // 'joined' or 'left'
+  timestamp: timestamp("timestamp").notNull(),
+  
+  // Additional metadata
+  playerRank: integer("player_rank"),
+  playerScore: integer("player_score"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  profileIdx: index("profile_activities_idx").on(table.profileId),
+  sessionIdx: index("session_activities_idx").on(table.sessionId),
+  serverTimestampIdx: index("server_timestamp_idx").on(table.serverId, table.timestamp),
+  actionIdx: index("action_idx").on(table.action),
+}));
+
+// Player sessions table - detailed session logs
+export const playerSessions = pgTable("player_sessions", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  profileId: text("profile_id").notNull().references(() => playerProfiles.id, { onDelete: "cascade" }),
+  serverId: text("server_id").notNull().references(() => battlemetricsServers.id),
+  playerName: text("player_name").notNull(),
+  battlemetricsId: text("battlemetrics_id"), // BattleMetrics player ID if available
+  
+  // Session timing
+  joinTime: timestamp("join_time").notNull(),
+  leaveTime: timestamp("leave_time"),
+  durationMinutes: integer("duration_minutes"), // Session duration in minutes
+  isActive: boolean("is_active").default(true).notNull(), // Player still online
+  
+  // Player info at time of session
+  playerRank: integer("player_rank"),
+  playerScore: integer("player_score"),
+  
+  // Session metadata
+  sessionType: text("session_type").default("normal"), // 'normal', 'premium'
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  profileIdx: index("profile_sessions_idx").on(table.profileId),
+  serverJoinTimeIdx: index("server_join_time_idx").on(table.serverId, table.joinTime),
+  activeSessionsIdx: index("active_sessions_idx").on(table.serverId, table.isActive),
+}));
 
 // Teammates table for tracking player teammate relationships
 export const teammates = pgTable("teammates", {
@@ -145,6 +264,115 @@ export const teammates = pgTable("teammates", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Relations
+export const battlemetricsServersRelations = relations(battlemetricsServers, ({ many }) => ({
+  playerProfiles: many(playerProfiles),
+  playerActivities: many(playerActivities),
+  playerSessions: many(playerSessions),
+}));
+
+export const playerProfilesRelations = relations(playerProfiles, ({ one, many }) => ({
+  server: one(battlemetricsServers, {
+    fields: [playerProfiles.serverId],
+    references: [battlemetricsServers.id],
+  }),
+  sessions: many(playerSessions),
+  activities: many(playerActivities),
+}));
+
+export const playerSessionsRelations = relations(playerSessions, ({ one }) => ({
+  profile: one(playerProfiles, {
+    fields: [playerSessions.profileId],
+    references: [playerProfiles.id],
+  }),
+  server: one(battlemetricsServers, {
+    fields: [playerSessions.serverId],
+    references: [battlemetricsServers.id],
+  }),
+}));
+
+export const playerActivitiesRelations = relations(playerActivities, ({ one }) => ({
+  profile: one(playerProfiles, {
+    fields: [playerActivities.profileId],
+    references: [playerProfiles.id],
+  }),
+  session: one(playerSessions, {
+    fields: [playerActivities.sessionId],
+    references: [playerSessions.id],
+  }),
+  server: one(battlemetricsServers, {
+    fields: [playerActivities.serverId],
+    references: [battlemetricsServers.id],
+  }),
+}));
+
+// Team management relations
+export const usersRelations = relations(users, ({ many }) => ({
+  createdTeams: many(teams),
+  teamMemberships: many(teamMembers),
+}));
+
+export const teamsRelations = relations(teams, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [teams.createdBy],
+    references: [users.id],
+  }),
+  members: many(teamMembers),
+}));
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamMembers.teamId],
+    references: [teams.id],
+  }),
+  user: one(users, {
+    fields: [teamMembers.userId],
+    references: [users.id],
+  }),
+}));
+
+// Insert schemas
+export const insertTeamSchema = createInsertSchema(teams).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertBattlemetricsServerSchema = createInsertSchema(battlemetricsServers);
+export const insertPlayerProfileSchema = createInsertSchema(playerProfiles);
+export const insertPlayerSessionSchema = createInsertSchema(playerSessions);
+export const insertPlayerActivitySchema = createInsertSchema(playerActivities);
 export const insertTeammateSchema = createInsertSchema(teammates).omit({ id: true, createdAt: true });
+
+// Team management schemas
+export const createTeamSchema = z.object({
+  name: z.string().min(1, "Team name is required").max(100, "Team name too long"),
+  description: z.string().optional(),
+});
+
+export const createUserSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters").max(50, "Username too long"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export const addTeamMemberSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  role: z.enum(["owner", "admin", "member"]).default("member"),
+});
+
+// Types
+export type InsertTeam = z.infer<typeof insertTeamSchema>;
+export type Team = typeof teams.$inferSelect;
+export type DBTeam = typeof teams.$inferSelect;
+export type InsertDBTeam = typeof teams.$inferInsert;
+export type DBTeamMember = typeof teamMembers.$inferSelect;
+export type InsertDBTeamMember = typeof teamMembers.$inferInsert;
+export type UpsertUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type BattlemetricsServer = typeof battlemetricsServers.$inferSelect;
+export type PlayerProfile = typeof playerProfiles.$inferSelect;
+export type PlayerSession = typeof playerSessions.$inferSelect;
+export type PlayerActivity = typeof playerActivities.$inferSelect;
+export type InsertPlayerProfile = z.infer<typeof insertPlayerProfileSchema>;
+export type InsertPlayerSession = z.infer<typeof insertPlayerSessionSchema>;
+export type InsertPlayerActivity = z.infer<typeof insertPlayerActivitySchema>;
 export type InsertTeammate = z.infer<typeof insertTeammateSchema>;
 export type Teammate = typeof teammates.$inferSelect;
+export type CreateTeamRequest = z.infer<typeof createTeamSchema>;
+export type CreateUserRequest = z.infer<typeof createUserSchema>;
+export type AddTeamMemberRequest = z.infer<typeof addTeamMemberSchema>;

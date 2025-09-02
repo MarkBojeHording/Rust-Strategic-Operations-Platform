@@ -1,11 +1,10 @@
-
 modules = ["nodejs-20", "web", "python-3.12"]
 
 [nix]
 channel = "stable-25_05"
 
 [workflows]
-runButton = "Project"
+runButton = "Run Tactical Command Center"
 
 [[workflows.workflow]]
 name = "Run Tactical Command Center"
@@ -14,105 +13,8 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd \"Rust Tactical Command Center\" && npm install"
+args = "cd \"Rust Tactical Command Center\""
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd \"Rust Tactical Command Center\" && npm run dev"
-
-[[workflows.workflow]]
-name = "Start Tactical Center"
-author = 47018196
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Tactical Command Center\" && npm run dev"
-
-[[workflows.workflow]]
-name = "Start Server Operations"
-author = 47018196
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Server Operations Center\" && npm install"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Server Operations Center\" && npm run db:push"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Server Operations Center\" && npm run dev"
-
-[[workflows.workflow]]
-name = "Start Server Operations Center"
-author = 47018196
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Server Operations Center\" && npm install"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Server Operations Center\" && npm run db:push"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Server Operations Center\" && npm run dev"
-
-[[workflows.workflow]]
-name = "Start Server Operations Center (Simple)"
-author = 47018196
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Server Operations Center\" && npm install"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Server Operations Center\" && NODE_ENV=development npm run dev"
-
-[[workflows.workflow]]
-name = "Start Base Design Studio"
-author = 47018196
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Base Design Studio\" && npm install"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Base Design Studio\" && node server.js"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Tactical Command Center"
-
-[[workflows.workflow]]
-name = "Tactical Command Center"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd \"Rust Tactical Command Center\" && npm run dev"
-waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[ports]]
-localPort = 5000
-externalPort = 80
-
-[agent]
-expertMode = true
+args = "npm run dev"

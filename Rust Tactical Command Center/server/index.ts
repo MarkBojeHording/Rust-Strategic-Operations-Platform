@@ -1,11 +1,28 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes.js";
+import { setupAuth } from "./replitAuth.js";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedReportTemplates } from "./seed-templates";
+
+// Allow self-signed certificates in development
+if (process.env.NODE_ENV === "development") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Setup authentication first
+/* try {
+  await setupAuth(app);
+  console.log("✓ Authentication setup complete");
+} catch (error) {
+  console.warn(
+    "⚠ Authentication setup failed, continuing without auth:",
+    error,
+  );
+} */
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -41,14 +58,28 @@ app.use((req, res, next) => {
   const server = await registerRoutes(app);
 
   // Seed report templates on startup
-  await seedReportTemplates();
+  try {
+    await seedReportTemplates();
+    console.log("✓ Report templates seeded successfully");
+  } catch (error) {
+    console.warn("⚠ Failed to seed report templates:", error);
+  }
+
+  // Initialize WebSocket manager for BattleMetrics tracking
+  try {
+    const { webSocketManager } = await import("./services/websocketManager");
+    webSocketManager.connect();
+    console.log("BattleMetrics WebSocket manager initialized");
+  } catch (error) {
+    console.error("Failed to initialize WebSocket manager:", error);
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    console.error('Request error:', err);
+    console.error("Request error:", err);
   });
 
   // importantly only setup vite in development and after
@@ -68,14 +99,17 @@ app.use((req, res, next) => {
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
+  // Other ports are firewalled. Default to 5001 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const PORT = process.env.PORT || 5000;
-  server.listen({
-    port: PORT,
-    host: "0.0.0.0",
-  }, () => {
-    log(`serving on port ${PORT}`);
-  });
+  const PORT = process.env.PORT || 5001;
+  server.listen(
+    {
+      port: PORT,
+      host: "0.0.0.0",
+    },
+    () => {
+      log(`serving on port ${PORT}`);
+    },
+  );
 })();
