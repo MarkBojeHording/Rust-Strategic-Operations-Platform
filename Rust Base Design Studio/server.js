@@ -125,6 +125,7 @@ app.get('/', (req, res) => {
 
 // Start server
 app.listen(PORT, '0.0.0.0', async () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Rust Base Design Studio server running on port ${PORT}`);
+    console.log(`✅ Preview available at: https://${process.env.REPL_SLUG || 'your-repl'}.${process.env.REPL_OWNER || 'username'}.repl.co`);
     await initializeDatabase();
 });

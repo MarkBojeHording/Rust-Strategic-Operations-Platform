@@ -5,7 +5,7 @@ modules = ["nodejs-20", "web", "python-3.12"]
 channel = "stable-25_05"
 
 [workflows]
-runButton = "Start Server Operations Center (Simple)"
+runButton = "Start Base Design Studio"
 
 [[workflows.workflow]]
 name = "Run Tactical Command Center"
@@ -75,6 +75,19 @@ args = "cd \"Rust Server Operations Center\" && npm install"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd \"Rust Server Operations Center\" && NODE_ENV=development npm run dev"
+
+[[workflows.workflow]]
+name = "Start Base Design Studio"
+author = 47018196
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd \"Rust Base Design Studio\" && npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd \"Rust Base Design Studio\" && node server.js"
 
 [[ports]]
 localPort = 5000
