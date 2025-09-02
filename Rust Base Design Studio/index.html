@@ -1612,12 +1612,129 @@
         let previewRotation = 0; // For External Wall preview rotation
         let tacticalModeActive = false; // Track tactical mode for grid colors
 
-        // Initialize managers
-        const turretManager = new TurretManager();
-        turretManager.initialized = true; // Add missing property
-        const floorManager = new FloorManager();
-        const selectionManager = new SelectionManager();
-        const toolManager = new ToolManager();
+        // Initialize managers - ensure classes are loaded first
+        let turretManager, floorManager, selectionManager, toolManager;
+        
+        // Wait for all classes to be available
+        function initializeManagers() {
+            try {
+                turretManager = new (window.TurretManager || class TurretManager {
+                    constructor() {
+                        this.powerContainers = [];
+                        this.selectedContainer = null;
+                        this.containerError = null;
+                        this.initialized = true;
+                    }
+                    getNextTurretNumber() { return 1; }
+                    placeTurret() { return null; }
+                    addPowerContainer() { return false; }
+                    deletePowerContainer() {}
+                    connectTurretToContainer() {}
+                    disconnectTurretFromContainer() {}
+                    getTurretStatus() { return 'OFFLINE'; }
+                    initializeGlobalTurretCounter() {}
+                    updateAllTurretNumbers() {}
+                })();
+                
+                floorManager = new (window.FloorManager || class FloorManager {
+                    constructor() {
+                        this.floorData = {
+                            1: { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] },
+                            2: { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] },
+                            3: { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] },
+                            4: { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] },
+                            5: { shapes: [], turrets: [], walls: [], windows: [], reinforcedWalls: [], garageDoors: [], securityGates: [] }
+                        };
+                        this.currentActiveFloor = 1;
+                        this.currentFloors = 5;
+                        this.floorCanvasStates = {};
+                    }
+                    redrawAllFloorCanvases() {}
+                    initializeFloorCanvas() {}
+                    handleFloorCanvasZoom() {}
+                    handleFloorCanvasMouseMove() {}
+                    handleFloorCanvasClick() {}
+                    handleFloorCanvasDrop() {}
+                    redrawFloorCanvasContent() {}
+                })();
+                
+                selectionManager = new (window.SelectionManager || class SelectionManager {
+                    constructor() {
+                        this.selectedItem = null;
+                        this.selectedType = null;
+                        this.initialized = true;
+                    }
+                    selectItem(item, type) {
+                        this.clearSelection();
+                        this.selectedItem = item;
+                        this.selectedType = type;
+                        if (item) item.selected = true;
+                    }
+                    clearSelection() {
+                        if (this.selectedItem) this.selectedItem.selected = false;
+                        this.selectedItem = null;
+                        this.selectedType = null;
+                    }
+                    getSelected() {
+                        return { item: this.selectedItem, type: this.selectedType };
+                    }
+                    isSelected(item) {
+                        return this.selectedItem === item;
+                    }
+                    hasSelection() {
+                        return this.selectedItem !== null;
+                    }
+                })();
+                
+                toolManager = new (window.ToolManager || class ToolManager {
+                    constructor() {
+                        this.currentTool = null;
+                        this.initialized = true;
+                    }
+                })();
+                
+                // Initialize canvas states with proper structure
+                const canvases = [
+                    { id: 'mapCanvas', floorNum: 1, isMain: true },
+                    { id: 'floor2Canvas', floorNum: 2 },
+                    { id: 'floor3Canvas', floorNum: 3 },
+                    { id: 'floor4Canvas', floorNum: 4 },
+                    { id: 'floor5Canvas', floorNum: 5 }
+                ];
+
+                canvases.forEach(({ id, floorNum, isMain }) => {
+                    const canvas = document.getElementById(id);
+                    if (canvas) {
+                        // Initialize canvas state
+                        floorManager.floorCanvasStates[id] = {
+                            panX: isMain ? panX : 0,
+                            panY: isMain ? panY : 0,
+                            zoom: isMain ? zoom : 1.0,
+                            initialized: false,
+                            isPanningFloor: false,
+                            lastFloorMouseX: 0,
+                            lastFloorMouseY: 0
+                        };
+                        
+                        // Add state directly to canvas for backward compatibility
+                        canvas.floorState = {
+                            isPanningFloor: false,
+                            lastFloorMouseX: 0,
+                            lastFloorMouseY: 0
+                        };
+                    }
+                });
+                
+                console.log('Managers initialized successfully');
+                return true;
+            } catch (error) {
+                console.error('Error initializing managers:', error);
+                return false;
+            }
+        }
+        
+        // Initialize immediately
+        initializeManagers();
 
         // Tool configuration using cached elements
         const toolButtons = {
@@ -4632,30 +4749,44 @@
 
             canvas.addEventListener('mousedown', (e) => {
                 if (e.button === 1 || (e.ctrlKey && e.button === 0)) {
-                    canvas.floorState = canvas.floorState || {};
-                    canvas.floorState.isPanningFloor = true;
-                    const rect = canvas.getBoundingClientRect();
-                    canvas.floorState.lastFloorMouseX = e.clientX - rect.left;
-                    canvas.floorState.lastFloorMouseY = e.clientY - rect.top;
-                    canvas.style.cursor = 'grabbing';
-                    e.preventDefault();
+                    const state = floorManager.floorCanvasStates[canvasId];
+                    if (state) {
+                        state.isPanningFloor = true;
+                        const rect = canvas.getBoundingClientRect();
+                        state.lastFloorMouseX = e.clientX - rect.left;
+                        state.lastFloorMouseY = e.clientY - rect.top;
+                        canvas.style.cursor = 'grabbing';
+                        e.preventDefault();
+                    }
                 }
             });
 
             canvas.addEventListener('mousemove', (e) => {
-                floorManager.handleFloorCanvasMouseMove(e, canvas, canvasId, floorNumber);
+                const state = floorManager.floorCanvasStates[canvasId];
+                if (state && state.isPanningFloor) {
+                    const rect = canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    state.panX += mouseX - state.lastFloorMouseX;
+                    state.panY += mouseY - state.lastFloorMouseY;
+                    state.lastFloorMouseX = mouseX;
+                    state.lastFloorMouseY = mouseY;
+                    floorManager.redrawFloorCanvasContent(canvasId, floorNumber);
+                }
             });
 
             canvas.addEventListener('mouseup', () => {
-                if (canvas.floorState) {
-                    canvas.floorState.isPanningFloor = false;
+                const state = floorManager.floorCanvasStates[canvasId];
+                if (state) {
+                    state.isPanningFloor = false;
                 }
                 canvas.style.cursor = currentTool ? 'crosshair' : 'grab';
             });
 
             canvas.addEventListener('mouseleave', () => {
-                if (canvas.floorState) {
-                    canvas.floorState.isPanningFloor = false;
+                const state = floorManager.floorCanvasStates[canvasId];
+                if (state) {
+                    state.isPanningFloor = false;
                 }
                 canvas.style.cursor = currentTool ? 'crosshair' : 'grab';
             });
