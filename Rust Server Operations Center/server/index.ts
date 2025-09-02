@@ -38,7 +38,8 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  try {
+    const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -51,9 +52,11 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  if (process.env.NODE_ENV === "development") {
+    log("Setting up Vite development server...");
     await setupVite(app, server);
   } else {
+    log("Serving static files for production");
     serveStatic(app);
   }
 
@@ -74,4 +77,8 @@ app.use((req, res, next) => {
       console.error('Failed to start WebSocket manager:', error);
     });
   });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 })();

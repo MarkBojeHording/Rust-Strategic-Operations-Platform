@@ -5,7 +5,7 @@ modules = ["nodejs-20", "web", "python-3.12"]
 channel = "stable-25_05"
 
 [workflows]
-runButton = "Start Server Operations Center"
+runButton = "Start Server Operations Center (Simple)"
 
 [[workflows.workflow]]
 name = "Run Tactical Command Center"
@@ -62,6 +62,19 @@ args = "cd \"Rust Server Operations Center\" && npm run db:push"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd \"Rust Server Operations Center\" && npm run dev"
+
+[[workflows.workflow]]
+name = "Start Server Operations Center (Simple)"
+author = 47018196
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd \"Rust Server Operations Center\" && npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd \"Rust Server Operations Center\" && NODE_ENV=development npm run dev"
 
 [[ports]]
 localPort = 5000

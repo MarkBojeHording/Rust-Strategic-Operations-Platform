@@ -1,15 +1,16 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool, neonConfig, neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
 import ws from "ws";
 import * as schema from "../shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
 if (!process.env.DATABASE_URL) {
-  console.warn("DATABASE_URL not set. Database operations will fail.");
-  // Create a mock database for development
-  const mockSql = () => Promise.resolve([]);
-  export const db = drizzle(mockSql as any, { schema });
+  console.warn("DATABASE_URL not set. Using default development database URL.");
+  // For development, use a mock database URL if not provided
+  const databaseUrl = process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/rustops?sslmode=disable';
+  const sql = neon(databaseUrl);
+  export const db = drizzle(sql, { schema });
 } else {
   const sql = neon(process.env.DATABASE_URL);
   export const db = drizzle(sql, { schema });

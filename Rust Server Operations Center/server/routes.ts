@@ -29,7 +29,12 @@ const backupManager = new BackupManager(globalWebSocketManager);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication middleware
-  await setupAuth(app);
+  try {
+    await setupAuth(app);
+  } catch (error) {
+    console.warn('Authentication setup failed, continuing without auth:', error);
+  }
+  
   const battleMetricsService = new BattleMetricsService();
   
   // In-memory storage for server list (you can replace with database)
@@ -37,7 +42,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Initialize backup manager system
   console.log('🚀 [Startup] Starting backup management system...');
-  backupManager.start();
+  try {
+    backupManager.start();
+  } catch (error) {
+    console.warn('Backup manager failed to start:', error);
+  }
 
   // Authentication routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
