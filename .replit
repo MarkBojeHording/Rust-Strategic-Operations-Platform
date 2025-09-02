@@ -5,7 +5,7 @@ modules = ["nodejs-20", "web", "python-3.12"]
 channel = "stable-25_05"
 
 [workflows]
-runButton = "Start Tactical Center"
+runButton = "Start Server Operations Center"
 
 [[workflows.workflow]]
 name = "Run Tactical Command Center"
