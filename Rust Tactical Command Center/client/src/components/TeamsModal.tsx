@@ -31,8 +31,17 @@ export function TeamsModal({ isOpen, onClose, locations, players, onOpenBaseModa
 
   // Fetch reports data
   const { data: reports = [] } = useQuery({
-    queryKey: ['/api/reports'],
-  }) as { data: any[] }
+    queryKey: ['reports'],
+    queryFn: async () => {
+      const response = await fetch('/api/reports')
+      if (!response.ok) {
+        throw new Error('Failed to fetch reports')
+      }
+      return response.json()
+    },
+    staleTime: 30000,
+    refetchInterval: 30000,
+  })
 
   const getBaseIcon = (type: string) => {
     const IconComponent = ICON_MAP[type as keyof typeof ICON_MAP] || Tent
