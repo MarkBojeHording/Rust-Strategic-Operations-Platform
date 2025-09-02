@@ -185,4 +185,4 @@ This platform includes security features such as:
 
 ---
 
-**© 2025 Mark Boje Hording. All Rights Reserved.**
+
