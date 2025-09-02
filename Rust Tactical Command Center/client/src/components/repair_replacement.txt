@@ -1,0 +1,12 @@
+                (e) => { 
+                  e.stopPropagation(); 
+                  // Create express task report for repair/upgrade
+                  if (onOpenTaskReport && baseId && baseName && baseCoords) {
+                    onOpenTaskReport({
+                      baseId,
+                      baseName, 
+                      baseCoords
+                    });
+                  }
+                  setSelectedInner(null);
+                },

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shape Map Editor - Modular</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        
+        .main-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        
+        .left-panel {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .toolbar {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 200px;
+        }
+        
+        .canvas-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            min-width: 940px;
+        }
+        
+        .right-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 200px;
+        }
+        
+        canvas {
+            border: 2px solid #ddd;
+            cursor: crosshair;
+            display: block;
+        }
+        
+        .shape-button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid var(--btn-color, #3498db);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .shape-button:hover,
+        .shape-button.active {
+            background: var(--btn-color, #3498db);
+            color: white;
+        }
+        
+        h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            text-align: center;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .control-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .control-btn:hover {
+            background: #2980b9;
+        }
+        
+        .info-panel {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .info-panel h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        
+        .info-item {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .zoom-control {
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        #zoomLevel {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="toolbar">
+                <h3>Tools</h3>
+                <button class="shape-button" id="squareBtn" style="--btn-color: #e74c3c">Square</button>
+                <button class="shape-button" id="triangleBtn" style="--btn-color: #3498db">Triangle</button>
+                <button class="shape-button" id="wallBtn" style="--btn-color: #8B4513">Wall</button>
+                <button class="shape-button" id="wall2Btn" style="--btn-color: #8B4513">Wall2</button>
+                <button class="shape-button" id="reinforcedWallBtn" style="--btn-color: #4A4A4A">Door Frame</button>
+                <button class="shape-button" id="doorBtn" style="--btn-color: #666666">Garage Door</button>
+                <button class="shape-button" id="securityGateBtn" style="--btn-color: #2C3E50">Posts</button>
+                
+                <div class="controls">
+                    <h3>Controls</h3>
+                    <button class="control-btn" onclick="clearCanvas()">Clear All</button>
+                    <button class="control-btn" onclick="toggleTransparency()">Toggle Transparency</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="canvas-container">
+            <h3>Shape Map Editor</h3>
+            <canvas id="canvas" width="900" height="600"></canvas>
+            <div class="zoom-control">
+                Zoom: <span id="zoomLevel">80%</span>
+            </div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666; text-align: center;">
+                Right-click to deselect tool • Middle-click or Ctrl+click to pan
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <h3>Properties</h3>
+            <div class="info-panel">
+                <h4>Selected Item</h4>
+                <div id="selectedInfo">
+                    <div class="info-item">No item selected</div>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <h4>Statistics</h4>
+                <div id="statsInfo">
+                    <div class="info-item">Shapes: <span id="shapeCount">0</span></div>
+                    <div class="info-item">Walls: <span id="wallCount">0</span></div>
+                    <div class="info-item">Wall2s: <span id="wall2Count">0</span></div>
+                </div>
+            </div>
+            
+            <div class="info-panel">
+                <h4>Instructions</h4>
+                <div class="info-item">• Select a tool to draw</div>
+                <div class="info-item">• Click on empty space to place shapes</div>
+                <div class="info-item">• Click on shape edges to place walls</div>
+                <div class="info-item">• Right-click to deselect tool</div>
+                <div class="info-item">• Click items to select them</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load modular JavaScript -->
+    <script src="js/utils/EdgeUtils.js"></script>
+    <script src="js/classes/Shape.js"></script>
+    <script src="js/classes/EdgeItems.js"></script>
+    <script src="js/managers/ToolManager.js"></script>
+    <script src="js/managers/SelectionManager.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/app.js"></script>
+    
+    <script>
+        // Global utility functions
+        function clearCanvas() {
+            if (window.app) {
+                window.app.gameState.clear();
+                window.app.selectionManager.deselectAll();
+                window.app.draw();
+                updateStats();
+            }
+        }
+        
+        function toggleTransparency() {
+            if (window.app) {
+                window.app.gameState.shapes.forEach(shape => {
+                    shape.transparent = !shape.transparent;
+                });
+                window.app.draw();
+            }
+        }
+        
+        function updateSelectedInfo() {
+            const selectedInfo = document.getElementById('selectedInfo');
+            if (!selectedInfo || !window.app) return;
+            
+            const selected = window.app.selectionManager.getSelectedItem();
+            
+            if (selected) {
+                const { item, type } = selected;
+                selectedInfo.innerHTML = `
+                    <div class="info-item">Type: ${type}</div>
+                    <div class="info-item">X: ${Math.round(item.x || 0)}</div>
+                    <div class="info-item">Y: ${Math.round(item.y || 0)}</div>
+                    ${item.rotation !== undefined ? `<div class="info-item">Rotation: ${Math.round(item.rotation * 180 / Math.PI)}°</div>` : ''}
+                `;
+            } else {
+                selectedInfo.innerHTML = '<div class="info-item">No item selected</div>';
+            }
+        }
+        
+        function updateStats() {
+            if (!window.app) return;
+            
+            const shapeCount = document.getElementById('shapeCount');
+            const wallCount = document.getElementById('wallCount');
+            const wall2Count = document.getElementById('wall2Count');
+            
+            if (shapeCount) shapeCount.textContent = window.app.gameState.shapes.length;
+            if (wallCount) wallCount.textContent = window.app.gameState.walls.length;
+            if (wall2Count) wall2Count.textContent = window.app.gameState.walls2.length;
+        }
+        
+        // Make updateSelectedInfo globally available
+        window.updateSelectedInfo = updateSelectedInfo;
+        
+        // Update stats periodically
+        setInterval(updateStats, 1000);
+    </script>
+</body>
+</html>
