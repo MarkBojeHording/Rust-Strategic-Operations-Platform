@@ -1,0 +1,29 @@
+[vite] connecting...
+[vite] connected.
+Warning: Internal React error: Expected static flag was missing. Please notify the React team.
+    at TeamsModal (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/src/components/TeamsModal.tsx:27:30)
+    at div
+    at div
+    at InteractiveTacticalMap (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/src/pages/tactical-map.tsx:2594:24)
+    at Route (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/@fs/home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/.vite/deps/wouter.js?v=2e3f616c:323:16)
+    at Switch (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/@fs/home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/.vite/deps/wouter.js?v=2e3f616c:379:17)
+    at Router
+    at Provider (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/@fs/home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/.vite/deps/chunk-KZT4B2QF.js?v=2e3f616c:44:15)
+    at TooltipProvider (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/@fs/home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=2e3f616c:57:5)
+    at QueryClientProvider (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/@fs/home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/.vite/deps/@tanstack_react-query.js?v=2e3f616c:2805:3)
+    at App
+at TeamsModal (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/src/components/TeamsModal.tsx:27:30)
+at div
+at div
+at InteractiveTacticalMap (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/src/pages/tactical-map.tsx:2594:24)
+at Route (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/@fs/home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/.vite/deps/wouter.js?v=2e3f616c:323:16)
+at Switch (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/@fs/home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/.vite/deps/wouter.js?v=2e3f616c:379:17)
+at Router
+at Provider (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/@fs/home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/.vite/deps/chunk-KZT4B2QF.js?v=2e3f616c:44:15)
+at TooltipProvider (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/@fs/home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=2e3f616c:57:5)
+at QueryClientProvider (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/@fs/home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/.vite/deps/@tanstack_react-query.js?v=2e3f616c:2805:3)
+at App
+at t.value (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://44aa36c5-2e62-44ef-a781-09ca08f1641a-00-1jh1zt0mhygij.pike.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
