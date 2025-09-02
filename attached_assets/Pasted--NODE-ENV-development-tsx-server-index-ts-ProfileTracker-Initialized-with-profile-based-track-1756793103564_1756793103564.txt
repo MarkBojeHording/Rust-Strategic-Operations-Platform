@@ -1,0 +1,29 @@
+> NODE_ENV=development tsx server/index.ts
+
+🎯 [ProfileTracker] Initialized with profile-based tracking
+🎯 [ProfileTracker] Initialized with profile-based tracking
+🎯 [ProfileTracker] Initialized with profile-based tracking
+🔧 [BackupManager] Initialized backup management system
+express-session deprecated req.secret; provide secret option file:/home/runner/workspace/Rust%20Server%20Operations%20Center/server/replitAuth.ts:1:864
+🚀 [Startup] Starting backup management system...
+🚀 [BackupManager] Starting backup management system...
+❤️ [BackupManager] Started health monitoring
+🔄 [BackupManager] Switching to WebSocket mode...
+Connecting to BattleMetrics WebSocket for persistent tracking...
+✅ [BackupManager] Successfully switched to WebSocket mode
+6:04:33 AM [express] Setting up Vite development server...
+6:04:33 AM [express] serving on port 5000
+Connecting to BattleMetrics WebSocket for persistent tracking...
+Error: secret option required for sessions
+    at session (/home/runner/workspace/Rust Server Operations Center/node_modules/express-session/index.js:204:12)
+    at Layer.handle [as handle_request] (/home/runner/workspace/Rust Server Operations Center/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/Rust Server Operations Center/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/Rust Server Operations Center/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/Rust Server Operations Center/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/Rust Server Operations Center/node_modules/express/lib/router/index.js:280:10)
+    at <anonymous> (/home/runner/workspace/Rust Server Operations Center/server/index.ts:37:3)
+    at Layer.handle [as handle_request] (/home/runner/workspace/Rust Server Operations Center/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/Rust Server Operations Center/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/Rust Server Operations Center/node_modules/express/lib/router/index.js:286:9
+✓ Connected to BattleMetrics WebSocket (persistent)
+✓ Connected to BattleMetrics WebSocket (persistent)
