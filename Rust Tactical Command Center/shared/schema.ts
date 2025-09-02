@@ -134,9 +134,74 @@ export const teams = pgTable("teams", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// BattleMetrics servers table for tracking monitored servers
+export const battlemetricsServers = pgTable("battlemetrics_servers", {
+  id: text("id").primaryKey(), // BattleMetrics server ID
+  name: text("name").notNull(),
+  game: text("game").notNull(),
+  region: text("region"),
+  isSelected: boolean("is_selected").default(false), // Which server is currently being tracked
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+  lastChecked: timestamp("last_checked"),
+  isActive: boolean("is_active").default(true).notNull(),
+});
+
+// Player profiles table for BattleMetrics integration
+export const playerProfiles = pgTable("player_profiles", {
+  id: text("id").primaryKey(),
+  playerName: text("player_name").notNull(),
+  battlemetricsId: text("battlemetrics_id").notNull(),
+  serverId: text("server_id").notNull().references(() => battlemetricsServers.id),
+  
+  // Current status
+  isOnline: boolean("is_online").default(false).notNull(),
+  currentSessionStart: timestamp("current_session_start"),
+  
+  // Activity tracking
+  lastJoinTime: timestamp("last_join_time"),
+  lastLeaveTime: timestamp("last_leave_time"),
+  lastSeenTime: timestamp("last_seen_time").defaultNow().notNull(),
+  
+  // Statistics
+  totalSessions: integer("total_sessions").default(0).notNull(),
+  totalPlayTimeMinutes: integer("total_play_time_minutes").default(0).notNull(),
+  
+  // Metadata
+  firstSeenAt: timestamp("first_seen_at").defaultNow().notNull(),
+  aliases: text("aliases").array().default([]), // Track name changes
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Player sessions table for detailed session tracking
+export const playerSessions = pgTable("player_sessions", {
+  id: text("id").primaryKey(),
+  profileId: text("profile_id").notNull().references(() => playerProfiles.id, { onDelete: "cascade" }),
+  serverId: text("server_id").notNull().references(() => battlemetricsServers.id),
+  playerName: text("player_name").notNull(),
+  battlemetricsId: text("battlemetrics_id").notNull(),
+  
+  // Session timing
+  joinTime: timestamp("join_time").notNull(),
+  leaveTime: timestamp("leave_time"),
+  durationMinutes: integer("duration_minutes"),
+  isActive: boolean("is_active").default(true).notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const insertTeamSchema = createInsertSchema(teams).omit({ id: true, createdAt: true });
+export const insertBattlemetricsServerSchema = createInsertSchema(battlemetricsServers);
+export const insertPlayerProfileSchema = createInsertSchema(playerProfiles);
+export const insertPlayerSessionSchema = createInsertSchema(playerSessions);
+
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type Team = typeof teams.$inferSelect;
+export type BattlemetricsServer = typeof battlemetricsServers.$inferSelect;
+export type PlayerProfile = typeof playerProfiles.$inferSelect;
+export type PlayerSession = typeof playerSessions.$inferSelect;
 
 // Teammates table for tracking player teammate relationships
 export const teammates = pgTable("teammates", {

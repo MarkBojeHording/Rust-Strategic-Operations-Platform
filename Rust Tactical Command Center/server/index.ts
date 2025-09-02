@@ -43,6 +43,15 @@ app.use((req, res, next) => {
   // Seed report templates on startup
   await seedReportTemplates();
 
+  // Initialize WebSocket manager for BattleMetrics tracking
+  try {
+    const { webSocketManager } = await import("./services/websocketManager");
+    webSocketManager.connect();
+    console.log("BattleMetrics WebSocket manager initialized");
+  } catch (error) {
+    console.error("Failed to initialize WebSocket manager:", error);
+  }
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

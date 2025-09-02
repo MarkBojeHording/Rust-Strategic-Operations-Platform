@@ -1,7 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertReportSchema, insertReportTemplateSchema, insertPremiumPlayerSchema, insertPlayerBaseTagSchema, insertPlayerProfileSchema, insertGeneticDataSchema } from "@shared/schema";
+import { insertReportSchema, insertReportTemplateSchema, insertPremiumPlayerSchema, insertPlayerBaseTagSchema, insertPlayerProfileSchema, insertGeneticDataSchema, insertBattlemetricsServerSchema } from "@shared/schema";
+import { battleMetricsService } from "./services/battlemetrics";
+import { webSocketManager } from "./services/websocketManager";
 
 // TEMPORARY FAKE DATA FUNCTIONS - TO BE DELETED LATER
 function getTempFakePlayers() {
@@ -614,9 +616,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // BattleMetrics Integration Routes
+
+  // Get available servers for selection
+  app.get("/api/battlemetrics/servers", async (req, res) => {
+    try {
+      const servers = await storage.getAllBattlemetricsServers();
+      res.json(servers);
+    } catch (error) {
+      console.error("Error getting BattleMetrics servers:", error);
+      res.status(500).json({ error: "Failed to get servers" });
+    }
+  });
+
+  // Search for servers to add
+  app.get("/api/battlemetrics/search", async (req, res) => {
+    try {
+      const { query } = req.query;
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ error: "Search query required" });
+      }
+      
+      const servers = await battleMetricsService.searchServers(query);
+      res.json(servers);
+    } catch (error) {
+      console.error("Error searching servers:", error);
+      res.status(500).json({ error: "Failed to search servers" });
+    }
+  });
+
+  // Add a server for tracking
+  app.post("/api/battlemetrics/servers", async (req, res) => {
+    try {
+      const { serverId } = req.body;
+      if (!serverId) {
+        return res.status(400).json({ error: "Server ID required" });
+      }
+
+      // Get server info from BattleMetrics
+      const serverInfo = await battleMetricsService.getServer(serverId);
+      
+      // Add to database
+      const server = await storage.addBattlemetricsServer({
+        id: serverInfo.id,
+        name: serverInfo.name,
+        game: serverInfo.game,
+        region: serverInfo.region,
+        isSelected: false,
+        isActive: true,
+      });
+
+      res.status(201).json(server);
+    } catch (error) {
+      console.error("Error adding server:", error);
+      res.status(500).json({ error: "Failed to add server" });
+    }
+  });
+
+  // Select a server for tracking (sets as active)
+  app.post("/api/battlemetrics/servers/:serverId/select", async (req, res) => {
+    try {
+      const { serverId } = req.params;
+      
+      // Unselect all other servers and select this one
+      await storage.selectBattlemetricsServer(serverId);
+      
+      // Subscribe to WebSocket for this server
+      webSocketManager.subscribeToServer(serverId);
+      
+      res.json({ success: true, selectedServer: serverId });
+    } catch (error) {
+      console.error("Error selecting server:", error);
+      res.status(500).json({ error: "Failed to select server" });
+    }
+  });
+
+  // Get current server info
+  app.get("/api/battlemetrics/servers/:serverId", async (req, res) => {
+    try {
+      const { serverId } = req.params;
+      const serverInfo = await battleMetricsService.getServer(serverId);
+      res.json(serverInfo);
+    } catch (error) {
+      console.error("Error getting server info:", error);
+      res.status(500).json({ error: "Failed to get server info" });
+    }
+  });
+
+  // Get live players for selected server
+  app.get("/api/battlemetrics/servers/:serverId/players", async (req, res) => {
+    try {
+      const { serverId } = req.params;
+      const players = await battleMetricsService.getPlayers(serverId);
+      
+      // Enhance with local profile data if available
+      const enhancedPlayers = await Promise.all(players.map(async (player) => {
+        const profile = await storage.getPlayerProfileByBattlemetricsId(player.id);
+        return {
+          ...player,
+          profile: profile || null, // Include local profile data for aliases, notes, etc.
+        };
+      }));
+      
+      res.json(enhancedPlayers);
+    } catch (error) {
+      console.error("Error getting server players:", error);
+      res.status(500).json({ error: "Failed to get server players" });
+    }
+  });
+
+  // Get player profiles from local database
+  app.get("/api/player-profiles", async (req, res) => {
+    try {
+      const profiles = await storage.getAllPlayerProfiles();
+      res.json(profiles);
+    } catch (error) {
+      console.error("Error getting player profiles:", error);
+      res.status(500).json({ error: "Failed to get player profiles" });
+    }
+  });
+
+  // Admin routes for monitoring tracking status
+  app.get("/api/admin/tracking-status", async (req, res) => {
+    try {
+      const selectedServer = await storage.getSelectedBattlemetricsServer();
+      const subscribedServers = webSocketManager.getSubscribedServers();
+      const totalProfiles = await storage.getPlayerProfileCount();
+      
+      res.json({
+        selectedServer: selectedServer?.id || null,
+        selectedServerName: selectedServer?.name || null,
+        subscribedServers,
+        totalPlayerProfiles: totalProfiles,
+        websocketConnected: webSocketManager.isConnected(),
+        trackingActive: selectedServer !== null,
+      });
+    } catch (error) {
+      console.error("Error getting tracking status:", error);
+      res.status(500).json({ error: "Failed to get tracking status" });
+    }
+  });
+
   // Note: Individual player routes removed - using external API for regular player data
 
   const httpServer = createServer(app);
+
+  // Initialize WebSocket connection on server start
+  webSocketManager.connect();
 
   return httpServer;
 }
