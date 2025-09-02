@@ -2462,6 +2462,9 @@ export default function InteractiveTacticalMap() {
         onMenuOptionClick={(option) => {
           if (option === 'Team management') {
             setShowTeamManagementModal(true)
+          } else if (option === 'Admin Control') {
+            // Add your admin control functionality here
+            console.log('Admin Control clicked - functionality to be implemented')
           }
         }}
         progressionDisplay={progressionDisplay}
