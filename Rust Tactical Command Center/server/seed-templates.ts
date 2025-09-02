@@ -1,4 +1,5 @@
 import { storage } from "./storage";
+import { db } from "./db";
 
 // Standard report templates for different types of reports
 const standardTemplates = [
