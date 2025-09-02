@@ -57,6 +57,10 @@ args = "cd \"Rust Server Operations Center\" && npm install"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "cd \"Rust Server Operations Center\" && npm run db:push"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "cd \"Rust Server Operations Center\" && npm run dev"
 
 [[ports]]
