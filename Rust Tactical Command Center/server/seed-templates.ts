@@ -48,6 +48,17 @@ const standardTemplates = [
 
 export async function seedReportTemplates() {
   try {
+    // Create report_templates table if it doesn't exist
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS report_templates (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        template TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    console.log("✓ Report templates table created/verified");
     for (const template of standardTemplates) {
       const existing = await storage.getReportTemplateByType(template.reportType);
       if (!existing) {

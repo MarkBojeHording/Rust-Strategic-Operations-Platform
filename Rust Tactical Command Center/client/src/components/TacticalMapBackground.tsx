@@ -36,7 +36,7 @@ const TacticalMapBackground = memo(({ mapDimensions }: TacticalMapBackgroundProp
           <rect 
             width="100%" 
             height="100%" 
-            fill="url(#mapPattern)" 
+            fill="#2a4a3a" 
             stroke="#4a6741" 
             strokeWidth="2"
           />

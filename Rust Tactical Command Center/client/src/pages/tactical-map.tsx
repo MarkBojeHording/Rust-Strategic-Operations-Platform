@@ -1701,22 +1701,6 @@ const SelectedLocationPanel = ({ location, onEdit, getOwnedBases, onSelectLocati
 
 // ============= MAIN COMPONENT =============
 export default function InteractiveTacticalMap() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
-  }
-
-  // Redirect to landing if not authenticated
-  if (!isAuthenticated) {
-    window.location.href = '/';
-    return null;
-  }
 
   // Grid and coordinate system state
   const [gridSize, setGridSize] = useState(50);

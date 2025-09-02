@@ -20,13 +20,10 @@ function AuthenticatedRouter() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Landing />;
-  }
-
   return (
     <Switch>
-      <Route path="/" component={TacticalMap} />
+      <Route path="/" component={isAuthenticated ? TacticalMap : Landing} />
+      <Route path="/tactical-map" component={TacticalMap} />
       <Route path="/icon-demo" component={IconDemo} />
       <Route component={NotFound} />
     </Switch>

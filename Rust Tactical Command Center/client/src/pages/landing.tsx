@@ -26,55 +26,53 @@ export default function Landing() {
           </Button>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          <Card className="text-center">
-            <CardHeader>
+        {/* User Interface Features */}
+        <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-8 mb-16">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6 text-center">
+            Interactive Tactical Map Interface
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="text-center">
               <Map className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-              <CardTitle>Tactical Maps</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Interactive map system with real-time marker placement and team coordination tools
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardHeader>
+              <h3 className="font-semibold mb-2">Map Overview</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Interactive tactical map with zoom controls and grid-based coordinate system for precise base placement
+              </p>
+            </div>
+            <div className="text-center">
               <Users className="h-12 w-12 text-green-600 mx-auto mb-4" />
-              <CardTitle>Team Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Create and manage teams with role-based permissions for Scouts, Raiders, and Admins
-              </CardDescription>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardHeader>
+              <h3 className="font-semibold mb-2">Base Management</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Place and manage friendly/enemy bases with real-time data visualization and resource tracking
+              </p>
+            </div>
+            <div className="text-center">
               <Zap className="h-12 w-12 text-yellow-600 mx-auto mb-4" />
-              <CardTitle>Real-time Updates</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Live coordination with instant map updates and team communication features
-              </CardDescription>
-            </CardContent>
-          </Card>
+              <h3 className="font-semibold mb-2">Tactical Reports</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Generate tactical reports based on gameplay needs with interactive map markers and team coordination
+              </p>
+            </div>
+          </div>
+        </div>
 
-          <Card className="text-center">
-            <CardHeader>
-              <Shield className="h-12 w-12 text-orange-600 mx-auto mb-4" />
-              <CardTitle>Secure Access</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Protected dashboard with secure authentication and role-based access control
-              </CardDescription>
-            </CardContent>
-          </Card>
+        {/* Features List */}
+        <div className="bg-white dark:bg-slate-900 rounded-lg p-8 mb-16 shadow-lg">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">Key Features</h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <ul className="space-y-2 text-slate-600 dark:text-slate-400">
+              <li>• Interactive tactical map as main interface</li>
+              <li>• Real-time data visualization</li>
+              <li>• Base placement and management tools</li>
+              <li>• Zoom controls and map navigation</li>
+            </ul>
+            <ul className="space-y-2 text-slate-600 dark:text-slate-400">
+              <li>• Resource management tools</li>
+              <li>• Tactical report generation</li>
+              <li>• Map marker manipulation</li>
+              <li>• Strategic gameplay coordination</li>
+            </ul>
+          </div>
         </div>
 
         {/* Additional Info */}
