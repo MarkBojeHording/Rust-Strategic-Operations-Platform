@@ -1,3 +1,4 @@
+
 modules = ["nodejs-20", "web", "python-3.12"]
 
 [nix]
@@ -13,8 +14,8 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd \"Rust Tactical Command Center\""
+args = "cd \"Rust Tactical Command Center\" && npm install"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "cd \"Rust Tactical Command Center\" && npm run dev"
