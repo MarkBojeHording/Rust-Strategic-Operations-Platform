@@ -9,6 +9,14 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role").default("user").notNull(), // user, admin, team_admin
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -102,6 +110,30 @@ export const insertPlayerBaseTagSchema = createInsertSchema(playerBaseTags).omit
 export type InsertPlayerBaseTag = z.infer<typeof insertPlayerBaseTagSchema>;
 export type PlayerBaseTag = typeof playerBaseTags.$inferSelect;
 
+// Team memberships table for linking users to teams
+export const teamMembers = pgTable("team_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  teamId: varchar("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: varchar("role").notNull().default("member"), // owner, admin, member
+  joinedAt: timestamp("joined_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  teamUserIdx: index("team_user_idx").on(table.teamId, table.userId),
+  userTeamsIdx: index("user_teams_idx").on(table.userId),
+}));
+
+// Session storage table for authentication
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
 // External player data structure to match your API
 export const externalPlayerSchema = z.object({
   playerName: z.string(),
@@ -112,14 +144,18 @@ export const externalPlayerSchema = z.object({
 
 export type ExternalPlayer = z.infer<typeof externalPlayerSchema>;
 
-// Teams table for organizing enemy bases
+// Teams table for organizing enemy bases and team management
 export const teams = pgTable("teams", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  name: text("name").notNull(),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull().unique(),
+  description: text("description"),
   color: text("color").notNull(), // Hex color for team identification
   mainBaseId: text("main_base_id"), // ID of the main base for this team
   notes: text("notes").default(""),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdBy: varchar("created_by").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // BattleMetrics servers table for tracking monitored servers
@@ -270,17 +306,64 @@ export const playerActivitiesRelations = relations(playerActivities, ({ one }) =
   }),
 }));
 
+// Team management relations
+export const usersRelations = relations(users, ({ many }) => ({
+  createdTeams: many(teams),
+  teamMemberships: many(teamMembers),
+}));
+
+export const teamsRelations = relations(teams, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [teams.createdBy],
+    references: [users.id],
+  }),
+  members: many(teamMembers),
+}));
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamMembers.teamId],
+    references: [teams.id],
+  }),
+  user: one(users, {
+    fields: [teamMembers.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
-export const insertTeamSchema = createInsertSchema(teams).omit({ id: true, createdAt: true });
+export const insertTeamSchema = createInsertSchema(teams).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertBattlemetricsServerSchema = createInsertSchema(battlemetricsServers);
 export const insertPlayerProfileSchema = createInsertSchema(playerProfiles);
 export const insertPlayerSessionSchema = createInsertSchema(playerSessions);
 export const insertPlayerActivitySchema = createInsertSchema(playerActivities);
 export const insertTeammateSchema = createInsertSchema(teammates).omit({ id: true, createdAt: true });
 
+// Team management schemas
+export const createTeamSchema = z.object({
+  name: z.string().min(1, "Team name is required").max(100, "Team name too long"),
+  description: z.string().optional(),
+});
+
+export const createUserSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters").max(50, "Username too long"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export const addTeamMemberSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  role: z.enum(["owner", "admin", "member"]).default("member"),
+});
+
 // Types
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type Team = typeof teams.$inferSelect;
+export type DBTeam = typeof teams.$inferSelect;
+export type InsertDBTeam = typeof teams.$inferInsert;
+export type DBTeamMember = typeof teamMembers.$inferSelect;
+export type InsertDBTeamMember = typeof teamMembers.$inferInsert;
+export type UpsertUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
 export type BattlemetricsServer = typeof battlemetricsServers.$inferSelect;
 export type PlayerProfile = typeof playerProfiles.$inferSelect;
 export type PlayerSession = typeof playerSessions.$inferSelect;
@@ -290,3 +373,6 @@ export type InsertPlayerSession = z.infer<typeof insertPlayerSessionSchema>;
 export type InsertPlayerActivity = z.infer<typeof insertPlayerActivitySchema>;
 export type InsertTeammate = z.infer<typeof insertTeammateSchema>;
 export type Teammate = typeof teammates.$inferSelect;
+export type CreateTeamRequest = z.infer<typeof createTeamSchema>;
+export type CreateUserRequest = z.infer<typeof createUserSchema>;
+export type AddTeamMemberRequest = z.infer<typeof addTeamMemberSchema>;
