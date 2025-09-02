@@ -5,9 +5,23 @@ import {
   createTeamSchema,
   createUserSchema,
   addTeamMemberSchema,
+  insertReportSchema,
+  insertReportTemplateSchema,
+  insertPremiumPlayerSchema,
+  insertPlayerBaseTagSchema,
+  insertPlayerProfileSchema,
+  insertGeneticDataSchema,
 } from "@shared/schema";
 import { battleMetricsService } from "./services/battlemetrics";
 import { webSocketManager } from "./services/websocketManager";
+
+// Authentication middleware
+function isAuthenticated(req: any, res: any, next: any) {
+  if (req.user) {
+    return next();
+  }
+  res.status(401).json({ message: "Authentication required" });
+}
 
 // TEMPORARY FAKE DATA FUNCTIONS - TO BE DELETED LATER
 function getTempFakePlayers() {
@@ -1026,13 +1040,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete map data" });
     }
   });
-
-  // Setup authentication middleware
-  try {
-    setupAuth(app);
-  } catch (error) {
-    console.warn('Authentication setup failed, continuing without auth:', error);
-  }
 
   const httpServer = createServer(app);
 
