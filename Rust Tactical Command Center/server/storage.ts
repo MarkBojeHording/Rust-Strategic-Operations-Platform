@@ -27,6 +27,8 @@ import {
   users,
   teams,
   teamMembers,
+  battlemetricsServers, // Ensure battlemetricsServers is imported
+  playerSessions, // Ensure playerSessions is imported
 } from "@shared/schema";
 
 // Utility function to generate consistent alphanumeric report IDs
@@ -98,14 +100,16 @@ export interface IStorage {
   clearAllGeneticData(): Promise<boolean>;
 
   // BattleMetrics server management
-  getAllBattlemetricsServers(): Promise<any[]>;
   addBattlemetricsServer(serverData: any): Promise<any>;
-  selectBattlemetricsServer(serverId: string): Promise<boolean>;
+  removeBattlemetricsServer(serverId: string): Promise<boolean>;
+  getBattlemetricsServers(): Promise<any[]>;
+  selectBattlemetricsServer(serverId: string): Promise<void>;
   getSelectedBattlemetricsServer(): Promise<any | null>;
 
   // Player profile management
   getPlayerProfileByBattlemetricsId(battlemetricsId: string): Promise<PlayerProfile | null>;
   getPlayerProfileCount(): Promise<number>;
+  createPlayerProfile(profileData: any): Promise<any>; // Use any for now as schema might be missing
   updatePlayerProfile(profileId: string, updates: any): Promise<boolean>;
 
   // Player session management

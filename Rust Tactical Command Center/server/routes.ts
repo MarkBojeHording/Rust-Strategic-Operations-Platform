@@ -994,6 +994,225 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // BattleMetrics Admin Routes
+  
+  // Get available servers from BattleMetrics API
+  app.get('/api/admin/bm/servers/available', isAuthenticated, async (req: any, res) => {
+    try {
+      const { page = 1, limit = 20, query = '' } = req.query;
+      
+      let servers = [];
+      if (query && typeof query === 'string') {
+        servers = await battleMetricsService.searchServers(query);
+      } else {
+        // Get a default list of popular Rust servers
+        servers = await battleMetricsService.searchServers('rust');
+      }
+      
+      // Paginate results
+      const startIndex = (parseInt(page as string) - 1) * parseInt(limit as string);
+      const endIndex = startIndex + parseInt(limit as string);
+      const paginatedServers = servers.slice(startIndex, endIndex);
+      
+      const response = {
+        servers: paginatedServers.map(server => ({
+          id: server.id,
+          name: server.name,
+          region: server.region,
+          online: server.status === 'online',
+          playerCount: server.players,
+          maxPlayers: server.maxPlayers,
+          game: server.game
+        })),
+        pagination: {
+          page: parseInt(page as string),
+          limit: parseInt(limit as string),
+          total: servers.length,
+          hasMore: endIndex < servers.length
+        }
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Error fetching available servers:", error);
+      res.status(500).json({ message: "Failed to fetch available servers" });
+    }
+  });
+
+  // Get tracked servers
+  app.get('/api/admin/bm/servers/tracked', isAuthenticated, async (req: any, res) => {
+    try {
+      const trackedServers = await storage.getBattlemetricsServers();
+      
+      // Get detailed info for each tracked server
+      const detailedServers = await Promise.all(
+        trackedServers.map(async (server) => {
+          try {
+            const serverInfo = await battleMetricsService.getServer(server.id);
+            return {
+              id: server.id,
+              name: serverInfo.name,
+              region: serverInfo.region,
+              online: serverInfo.status === 'online',
+              playerCount: serverInfo.players,
+              maxPlayers: serverInfo.maxPlayers,
+              game: serverInfo.game,
+              isSelected: server.isSelected,
+              addedAt: server.addedAt,
+              lastChecked: server.lastChecked
+            };
+          } catch (error) {
+            return {
+              id: server.id,
+              name: server.name,
+              region: 'Unknown',
+              online: false,
+              playerCount: 0,
+              maxPlayers: 0,
+              game: server.game,
+              isSelected: server.isSelected,
+              addedAt: server.addedAt,
+              lastChecked: server.lastChecked,
+              error: 'Failed to fetch server info'
+            };
+          }
+        })
+      );
+      
+      res.json(detailedServers);
+    } catch (error) {
+      console.error("Error fetching tracked servers:", error);
+      res.status(500).json({ message: "Failed to fetch tracked servers" });
+    }
+  });
+
+  // Add server to tracking
+  app.post('/api/admin/bm/servers/tracked', isAuthenticated, async (req: any, res) => {
+    try {
+      const { bmServerId } = req.body;
+      
+      if (!bmServerId) {
+        return res.status(400).json({ message: "Server ID is required" });
+      }
+      
+      // Check if server is already tracked
+      const existingServers = await storage.getBattlemetricsServers();
+      const existing = existingServers.find(s => s.id === bmServerId);
+      
+      if (existing) {
+        return res.status(400).json({ message: "Server is already being tracked" });
+      }
+      
+      // Get server info from BattleMetrics
+      const serverInfo = await battleMetricsService.getServer(bmServerId);
+      
+      // Add to database
+      const server = await storage.addBattlemetricsServer({
+        id: serverInfo.id,
+        name: serverInfo.name,
+        game: serverInfo.game,
+        region: serverInfo.region,
+        isSelected: false,
+        isActive: true
+      });
+      
+      res.status(201).json({
+        id: server.id,
+        name: serverInfo.name,
+        region: serverInfo.region,
+        online: serverInfo.status === 'online',
+        playerCount: serverInfo.players,
+        maxPlayers: serverInfo.maxPlayers,
+        game: serverInfo.game,
+        isSelected: server.isSelected,
+        addedAt: server.addedAt
+      });
+    } catch (error) {
+      console.error("Error adding tracked server:", error);
+      res.status(500).json({ message: "Failed to add server to tracking" });
+    }
+  });
+
+  // Remove server from tracking
+  app.delete('/api/admin/bm/servers/tracked/:bmServerId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { bmServerId } = req.params;
+      
+      const success = await storage.removeBattlemetricsServer(bmServerId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Server not found in tracking list" });
+      }
+      
+      res.json({ success: true, message: "Server removed from tracking" });
+    } catch (error) {
+      console.error("Error removing tracked server:", error);
+      res.status(500).json({ message: "Failed to remove server from tracking" });
+    }
+  });
+
+  // Get system status and diagnostics
+  app.get('/api/admin/bm/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const status = {
+        battlemetricsApi: { healthy: true },
+        websocket: { 
+          connected: webSocketManager.isConnected(),
+          subscribedServers: webSocketManager.getSubscribedServers()
+        },
+        database: { healthy: true },
+        errors: []
+      };
+      
+      // Test BattleMetrics API health
+      try {
+        await battleMetricsService.searchServers('test');
+        status.battlemetricsApi.healthy = true;
+      } catch (error) {
+        status.battlemetricsApi.healthy = false;
+        status.errors.push({
+          time: new Date().toISOString(),
+          scope: 'battlemetrics_api',
+          message: error instanceof Error ? error.message : 'API connection failed'
+        });
+      }
+      
+      // Test database health
+      try {
+        const testQuery = await storage.getAllUsers();
+        status.database.healthy = true;
+      } catch (error) {
+        status.database.healthy = false;
+        status.errors.push({
+          time: new Date().toISOString(),
+          scope: 'database',
+          message: error instanceof Error ? error.message : 'Database connection failed'
+        });
+      }
+      
+      // Get selected server info
+      try {
+        const selectedServer = await storage.getSelectedBattlemetricsServer();
+        status.selectedServer = selectedServer ? {
+          id: selectedServer.id,
+          name: selectedServer.name,
+          region: selectedServer.region
+        } : null;
+      } catch (error) {
+        status.errors.push({
+          time: new Date().toISOString(),
+          scope: 'selected_server',
+          message: 'Could not retrieve selected server info'
+        });
+      }
+      
+      res.json(status);
+    } catch (error) {
+      console.error("Error getting system status:", error);
+      res.status(500).json({ message: "Failed to get system status" });
+    }
+  });
+
   // Map Storage API Endpoints
 
   // Get cached map for a server

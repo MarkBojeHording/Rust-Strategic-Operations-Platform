@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Trash2, UserPlus, Users, Plus, Edit, X } from 'lucide-react';
+import { Trash2, UserPlus, Users, Plus, Edit, X, Server, Activity, Search, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
 interface User {
@@ -36,6 +36,28 @@ interface TeamMember {
   role: 'owner' | 'admin' | 'member';
   joinedAt: string;
   user?: User;
+}
+
+interface BMServer {
+  id: string;
+  name: string;
+  region: string;
+  online: boolean;
+  playerCount: number;
+  maxPlayers?: number;
+  game: string;
+  isSelected?: boolean;
+  addedAt?: string;
+  lastChecked?: string;
+  error?: string;
+}
+
+interface SystemStatus {
+  battlemetricsApi: { healthy: boolean };
+  websocket: { connected: boolean; subscribedServers: string[] };
+  database: { healthy: boolean };
+  selectedServer?: { id: string; name: string; region: string } | null;
+  errors: Array<{ time: string; scope: string; message: string }>;
 }
 
 interface AdminModalProps {
@@ -72,6 +94,18 @@ const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
   const [addMemberForm, setAddMemberForm] = useState({
     userId: '',
     role: 'member' as 'owner' | 'admin' | 'member'
+  });
+
+  // BattleMetrics state
+  const [availableServers, setAvailableServers] = useState<BMServer[]>([]);
+  const [trackedServers, setTrackedServers] = useState<BMServer[]>([]);
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [serverSearchQuery, setServerSearchQuery] = useState('');
+  const [serverPagination, setServerPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    hasMore: false
   });
 
   // Fetch data
@@ -123,8 +157,71 @@ const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
     if (isOpen) {
       fetchUsers();
       fetchTeams();
+      if (activeTab === 'servers') {
+        fetchAvailableServers();
+        fetchTrackedServers();
+      } else if (activeTab === 'diagnostics') {
+        fetchSystemStatus();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, activeTab]);
+
+  // BattleMetrics fetch functions
+  const fetchAvailableServers = async (page = 1, query = '') => {
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: serverPagination.limit.toString(),
+      });
+      
+      if (query) {
+        params.append('query', query);
+      }
+      
+      const response = await fetch(`/api/admin/bm/servers/available?${params}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableServers(data.servers);
+        setServerPagination(data.pagination);
+      }
+    } catch (error) {
+      console.error('Error fetching available servers:', error);
+      setError('Failed to fetch available servers');
+    }
+  };
+
+  const fetchTrackedServers = async () => {
+    try {
+      const response = await fetch('/api/admin/bm/servers/tracked', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTrackedServers(data);
+      }
+    } catch (error) {
+      console.error('Error fetching tracked servers:', error);
+      setError('Failed to fetch tracked servers');
+    }
+  };
+
+  const fetchSystemStatus = async () => {
+    try {
+      const response = await fetch('/api/admin/bm/status', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSystemStatus(data);
+      }
+    } catch (error) {
+      console.error('Error fetching system status:', error);
+      setError('Failed to fetch system status');
+    }
+  };
 
   // User management functions
   const handleCreateUser = async () => {
@@ -323,6 +420,56 @@ const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
     setLoading(false);
   };
 
+  // BattleMetrics server management
+  const handleTrackServer = async (serverId: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin/bm/servers/tracked', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ bmServerId: serverId })
+      });
+
+      if (response.ok) {
+        await fetchTrackedServers();
+        setError(null);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Failed to track server');
+      }
+    } catch (error) {
+      setError('Failed to track server');
+    }
+    setLoading(false);
+  };
+
+  const handleUntrackServer = async (serverId: string) => {
+    if (!confirm('Are you sure you want to stop tracking this server?')) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/admin/bm/servers/tracked/${serverId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        await fetchTrackedServers();
+        setError(null);
+      } else {
+        setError('Failed to untrack server');
+      }
+    } catch (error) {
+      setError('Failed to untrack server');
+    }
+    setLoading(false);
+  };
+
+  const handleSearchServers = async () => {
+    await fetchAvailableServers(1, serverSearchQuery);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -340,9 +487,11 @@ const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="teams">Team Management</TabsTrigger>
+            <TabsTrigger value="servers">Server Management</TabsTrigger>
+            <TabsTrigger value="diagnostics">System Diagnostics</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="space-y-4">
@@ -608,6 +757,203 @@ const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="servers" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Server className="h-5 w-5" />
+                  Available Servers
+                </CardTitle>
+                <CardDescription>Search and add BattleMetrics servers for tracking</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Search servers..."
+                    value={serverSearchQuery}
+                    onChange={(e) => setServerSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearchServers()}
+                  />
+                  <Button onClick={handleSearchServers} disabled={loading}>
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {availableServers.map((server) => (
+                    <div key={server.id} className="flex items-center justify-between p-3 border rounded">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <div className="font-medium">{server.name}</div>
+                          <div className="text-sm text-gray-500">
+                            {server.region} • {server.playerCount}/{server.maxPlayers || 0} players
+                          </div>
+                        </div>
+                        <Badge variant={server.online ? 'default' : 'destructive'}>
+                          {server.online ? 'Online' : 'Offline'}
+                        </Badge>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleTrackServer(server.id)}
+                        disabled={loading || trackedServers.some(t => t.id === server.id)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        {trackedServers.some(t => t.id === server.id) ? 'Tracked' : 'Track'}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Tracked Servers ({trackedServers.length})</CardTitle>
+                <CardDescription>Servers currently being monitored</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {trackedServers.map((server) => (
+                    <div key={server.id} className="flex items-center justify-between p-3 border rounded">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <div className="font-medium">{server.name}</div>
+                          <div className="text-sm text-gray-500">
+                            {server.region} • {server.playerCount}/{server.maxPlayers || 0} players
+                          </div>
+                          {server.error && (
+                            <div className="text-sm text-red-500">{server.error}</div>
+                          )}
+                        </div>
+                        <Badge variant={server.online ? 'default' : 'destructive'}>
+                          {server.online ? 'Online' : 'Offline'}
+                        </Badge>
+                        {server.isSelected && (
+                          <Badge variant="outline">Selected</Badge>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleUntrackServer(server.id)}
+                        disabled={loading}
+                      >
+                        <EyeOff className="h-4 w-4 mr-1" />
+                        Untrack
+                      </Button>
+                    </div>
+                  ))}
+                  {trackedServers.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      No servers are currently being tracked
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="diagnostics" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  System Status
+                </CardTitle>
+                <CardDescription>Monitor system health and performance</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {systemStatus && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 border rounded">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">BattleMetrics API</span>
+                          <Badge variant={systemStatus.battlemetricsApi.healthy ? 'default' : 'destructive'}>
+                            {systemStatus.battlemetricsApi.healthy ? 'Healthy' : 'Error'}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 border rounded">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">WebSocket</span>
+                          <Badge variant={systemStatus.websocket.connected ? 'default' : 'destructive'}>
+                            {systemStatus.websocket.connected ? 'Connected' : 'Disconnected'}
+                          </Badge>
+                        </div>
+                        {systemStatus.websocket.subscribedServers.length > 0 && (
+                          <div className="text-sm text-gray-500 mt-1">
+                            Subscribed to {systemStatus.websocket.subscribedServers.length} server(s)
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="p-4 border rounded">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Database</span>
+                          <Badge variant={systemStatus.database.healthy ? 'default' : 'destructive'}>
+                            {systemStatus.database.healthy ? 'Healthy' : 'Error'}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 border rounded">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Selected Server</span>
+                          <Badge variant={systemStatus.selectedServer ? 'default' : 'secondary'}>
+                            {systemStatus.selectedServer ? 'Active' : 'None'}
+                          </Badge>
+                        </div>
+                        {systemStatus.selectedServer && (
+                          <div className="text-sm text-gray-500 mt-1">
+                            {systemStatus.selectedServer.name}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {systemStatus.errors.length > 0 && (
+                      <div>
+                        <h4 className="font-medium mb-2">Recent Errors</h4>
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {systemStatus.errors.slice(0, 20).map((error, index) => (
+                            <div key={index} className="p-2 bg-red-50 border border-red-200 rounded text-sm">
+                              <div className="flex justify-between items-start">
+                                <span className="font-medium text-red-800">{error.scope}</span>
+                                <span className="text-red-600 text-xs">
+                                  {new Date(error.time).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="text-red-700 mt-1">{error.message}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <Button 
+                      onClick={fetchSystemStatus} 
+                      disabled={loading}
+                      className="w-full"
+                    >
+                      Refresh Status
+                    </Button>
+                  </>
+                )}
+                
+                {!systemStatus && (
+                  <div className="text-center py-8">
+                    <Button onClick={fetchSystemStatus} disabled={loading}>
+                      Load System Status
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
