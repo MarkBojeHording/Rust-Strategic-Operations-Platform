@@ -66,6 +66,19 @@ export function PlayerModal({ isOpen, onClose, onOpenBaseModal }: PlayerModalPro
     enabled: isOpen,
   });
 
+  // Fetch real-time BattleMetrics server players
+  const { data: battlemetricsPlayers = [] } = useQuery<any[]>({
+    queryKey: ['/api/battlemetrics/players'],
+    enabled: isOpen,
+    refetchInterval: 30000, // Update every 30 seconds
+  });
+
+  // Fetch active server info for BattleMetrics integration
+  const { data: activeServer } = useQuery({
+    queryKey: ['/api/battlemetrics/servers/active'],
+    enabled: isOpen
+  });
+
   // Fetch premium players from our database
   const { data: premiumPlayers = [] } = useQuery<any[]>({
     queryKey: ['/api/premium-players'],
@@ -178,11 +191,36 @@ export function PlayerModal({ isOpen, onClose, onOpenBaseModal }: PlayerModalPro
     removeTeammateMutation.mutate(playerName);
   };
 
+  // Merge BattleMetrics real-time data with existing player data
+  const mergedPlayers = players.map(player => {
+    const bmPlayer = battlemetricsPlayers.find(bp => bp.name === player.playerName);
+    return {
+      ...player,
+      isOnlineBM: bmPlayer?.isOnline || false,
+      lastSeenBM: bmPlayer?.lastSeen || null,
+      battlemetricsId: bmPlayer?.id || null
+    };
+  });
+
+  // Add players that are online in BattleMetrics but not in our database
+  const onlineBMPlayers = battlemetricsPlayers.filter(bmPlayer => 
+    bmPlayer.isOnline && !players.some(p => p.playerName === bmPlayer.name)
+  ).map(bmPlayer => ({
+    playerName: bmPlayer.name,
+    isOnline: true,
+    isOnlineBM: true,
+    totalSessions: 0,
+    battlemetricsId: bmPlayer.id,
+    lastSeenBM: bmPlayer.lastSeen
+  }));
+
+  const allPlayers = [...mergedPlayers, ...onlineBMPlayers];
+
   // Filter players based on search criteria
-  const filteredPlayers = players.filter(player => {
+  const filteredPlayers = allPlayers.filter(player => {
     const nameMatch = nameSearch === '' || player.playerName.toLowerCase().includes(nameSearch.toLowerCase());
     // For now, search by session count for base number search (you can customize this)
-    const sessionMatch = baseNumberSearch === '' || player.totalSessions.toString().includes(baseNumberSearch);
+    const sessionMatch = baseNumberSearch === '' || (player.totalSessions || 0).toString().includes(baseNumberSearch);
     return nameMatch && sessionMatch;
   });
 
@@ -627,80 +665,95 @@ export function PlayerModal({ isOpen, onClose, onOpenBaseModal }: PlayerModalPro
                       ))}
                       
                       {/* Regular Players */}
-                      {filteredPlayers.map((player, index) => (
-                        <div
-                          key={index}
-                          className="p-3 flex items-center justify-between hover:bg-gray-700 transition-colors"
-                          data-testid={`player-item-${index}`}
-                        >
-                          <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => setSelectedPlayer(player.playerName)}>
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`w-2 h-2 rounded-full ${
-                                  isTeammate(player.playerName)
-                                    ? (player.isOnline ? 'bg-green-500' : 'bg-gray-600')
-                                    : player.isOnline 
-                                      ? (isEnemyPlayer(player.playerName) ? 'bg-red-500' : 'bg-yellow-500')
-                                      : 'bg-gray-500'
-                                }`}
-                                data-testid={`status-indicator-${index}`}
-                              />
-                              <span
-                                className={`font-medium ${
-                                  isTeammate(player.playerName)
-                                    ? (player.isOnline ? 'text-green-400' : 'text-gray-500')
-                                    : player.isOnline 
-                                      ? (isEnemyPlayer(player.playerName) ? 'text-red-400' : 'text-yellow-400')
-                                      : 'text-gray-400'
-                                }`}
-                                data-testid={`player-name-${index}`}
-                              >
-                                {player.playerName}
-                              </span>
-                              {isTeammate(player.playerName) && (
-                                <span className="text-xs px-1.5 py-0.5 bg-green-600/20 text-green-400 rounded-full border border-green-600/30">
-                                  TEAMMATE
+                      {filteredPlayers.map((player, index) => {
+                        const isOnlineReal = player.isOnlineBM || player.isOnline;
+                        const statusColor = isTeammate(player.playerName)
+                          ? (isOnlineReal ? 'text-green-400' : 'text-gray-500')
+                          : isOnlineReal 
+                            ? (isEnemyPlayer(player.playerName) ? 'text-red-400' : 'text-yellow-400')
+                            : 'text-gray-400';
+                        
+                        return (
+                          <div
+                            key={`${player.playerName}-${index}`}
+                            className="p-3 flex items-center justify-between hover:bg-gray-700 transition-colors"
+                            data-testid={`player-item-${index}`}
+                          >
+                            <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => setSelectedPlayer(player.playerName)}>
+                              <div className="flex items-center gap-2">
+                                <div className="relative">
+                                  <div
+                                    className={`w-2 h-2 rounded-full ${
+                                      isTeammate(player.playerName)
+                                        ? (isOnlineReal ? 'bg-green-500' : 'bg-gray-600')
+                                        : isOnlineReal 
+                                          ? (isEnemyPlayer(player.playerName) ? 'bg-red-500' : 'bg-yellow-500')
+                                          : 'bg-gray-500'
+                                    }`}
+                                    data-testid={`status-indicator-${index}`}
+                                  />
+                                  {player.isOnlineBM && (
+                                    <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-blue-400 rounded-full border border-gray-800" title="Live BattleMetrics data" />
+                                  )}
+                                </div>
+                                <span
+                                  className={`font-medium ${statusColor}`}
+                                  data-testid={`player-name-${index}`}
+                                >
+                                  {player.playerName}
                                 </span>
+                                {isTeammate(player.playerName) && (
+                                  <span className="text-xs px-1.5 py-0.5 bg-green-600/20 text-green-400 rounded-full border border-green-600/30">
+                                    TEAMMATE
+                                  </span>
+                                )}
+                                {player.battlemetricsId && (
+                                  <span className="text-xs px-1.5 py-0.5 bg-blue-600/20 text-blue-400 rounded-full border border-blue-600/30">
+                                    LIVE
+                                  </span>
+                                )}
+                                <span
+                                  className={`text-sm ${statusColor}`}
+                                  data-testid={`player-status-${index}`}
+                                >
+                                  {isOnlineReal ? 'Online' : 'Offline'}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className={`text-sm ${statusColor}`} data-testid={`online-status-${index}`}>
+                                {isOnlineReal ? (
+                                  <span className="flex items-center gap-1">
+                                    {player.isOnlineBM ? 'Live on Server' : 'Currently Online'}
+                                    {player.isOnlineBM && <Monitor className="w-3 h-3" />}
+                                  </span>
+                                ) : 'Offline'}
+                              </div>
+                              {player.lastSeenBM && !isOnlineReal && (
+                                <div className="text-xs text-gray-500">
+                                  Last seen: {new Date(player.lastSeenBM).toLocaleDateString()}
+                                </div>
                               )}
-                              <span
-                                className={`text-sm ${
-                                  isTeammate(player.playerName)
-                                    ? (player.isOnline ? 'text-green-300' : 'text-gray-600')
-                                    : player.isOnline 
-                                      ? (isEnemyPlayer(player.playerName) ? 'text-red-300' : 'text-yellow-300')
-                                      : 'text-gray-500'
-                                }`}
-                                data-testid={`player-status-${index}`}
-                              >
-                                {player.isOnline ? 'Online' : 'Offline'}
-                              </span>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div 
-                              className={`text-sm ${
-                                isTeammate(player.playerName)
-                                  ? (player.isOnline ? 'text-green-400' : 'text-gray-500')
-                                  : player.isOnline 
-                                    ? (isEnemyPlayer(player.playerName) ? 'text-red-400' : 'text-yellow-400')
-                                    : 'text-gray-400'
-                              }`}
-                              data-testid={`online-status-${index}`}
-                            >
-                              {player.isOnline ? 'Currently Online' : 'Offline'}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
 
                 {/* Results Summary */}
                 {!isLoading && (
-                  <div className="text-sm text-gray-400 text-center">
-                    Showing {filteredPlayers.length + filteredPremiumPlayers.length} players 
-                    ({filteredPlayers.length} regular, {filteredPremiumPlayers.length} premium)
+                  <div className="text-sm text-gray-400 text-center space-y-1">
+                    <div>
+                      Showing {filteredPlayers.length + filteredPremiumPlayers.length} players 
+                      ({filteredPlayers.length} regular, {filteredPremiumPlayers.length} premium)
+                    </div>
+                    {activeServer && (
+                      <div className="text-xs text-blue-400">
+                        Live data from: {activeServer.name} ({battlemetricsPlayers.filter(p => p.isOnline).length} online)
+                      </div>
+                    )}
                   </div>
                 )}
               </>

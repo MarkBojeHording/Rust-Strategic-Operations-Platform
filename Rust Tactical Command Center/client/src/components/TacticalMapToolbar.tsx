@@ -1,5 +1,7 @@
 import { memo, useState, useEffect } from 'react'
 import WipeCountdownTimer from './WipeCountdownTimer'
+import { Calculator, Users, FileText, TrendingUp, Settings, Bot, Target, Wifi, WifiOff } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 
 interface TacticalMapToolbarProps {
   onButtonClick: (buttonType: string) => void
@@ -15,6 +17,13 @@ interface TacticalMapToolbarProps {
 
 const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progressionDisplay, onWipeCountdownChange }: TacticalMapToolbarProps) => {
   const [showMenuDropdown, setShowMenuDropdown] = useState(false)
+
+  // Fetch active server status for BattleMetrics integration
+  const { data: activeServer } = useQuery({
+    queryKey: ['/api/battlemetrics/servers/active'],
+    refetchInterval: 60000 // Check every minute
+  })
+
 
   // Close menu dropdown when clicking outside
   useEffect(() => {
@@ -53,36 +62,35 @@ const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progression
             <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3">
               <div className="flex items-center justify-between">
                 <div className="flex gap-2">
-                  {['Logs', 'Progression', 'Teams', 'Players'].map((btn) => (
-                    btn === 'Progression' ? (
-                      <div key={btn} className="relative">
-                        <button 
-                          onClick={() => handleButtonClick('Progression')}
-                          data-testid="button-open-progression-modal"
-                          className="px-4 py-2 bg-gradient-to-b from-orange-800/60 to-orange-900 hover:from-orange-700/80 hover:to-orange-800 text-orange-100 font-bold rounded shadow-lg border-2 border-orange-600/50 transition-all duration-200 hover:shadow-xl hover:shadow-orange-900/50 tracking-wide"
-                        >
-                          [PROGRESSION]
-                        </button>
-                        {/* Progression Display Container */}
-                        {progressionDisplay.enabled && (
-                          <div className="absolute top-full left-0 mt-1 bg-gray-900/95 border border-orange-600/50 rounded px-2 py-1 text-orange-100 font-mono text-xs leading-none whitespace-nowrap z-[60]">
-                            <div className="text-orange-400">Recommended kit level:</div>
-                            <div>In a group: <span className="text-orange-200">{progressionDisplay.inGroupWeapon}</span></div>
-                            <div>When alone: <span className="text-orange-200">{progressionDisplay.aloneWeapon}</span></div>
-                            <div>Countering: <span className="text-orange-200">{progressionDisplay.counteringWeapon}</span></div>
-                          </div>
-                        )}
-                      </div>
+                  {/* BattleMetrics Status Indicator */}
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-b from-gray-800/60 to-gray-900 rounded shadow-lg border-2 border-gray-600/50">
+                    {activeServer ? (
+                      <>
+                        <Wifi className="w-4 h-4 text-green-400" />
+                        <span className="text-green-400 text-sm font-medium">
+                          {activeServer.name?.substring(0, 20)}...
+                        </span>
+                        <span className="text-green-300 text-xs">
+                          ({activeServer.players || 0}/{activeServer.maxPlayers || 0})
+                        </span>
+                      </>
                     ) : (
-                      <button 
-                        key={btn} 
-                        onClick={() => handleButtonClick(btn)}
-                        data-testid={btn === 'Players' ? 'button-open-player-modal' : btn === 'Logs' ? 'button-open-logs-modal' : undefined} 
-                        className="px-4 py-2 bg-gradient-to-b from-orange-800/60 to-orange-900 hover:from-orange-700/80 hover:to-orange-800 text-orange-100 font-bold rounded shadow-lg border-2 border-orange-600/50 transition-all duration-200 hover:shadow-xl hover:shadow-orange-900/50 tracking-wide"
-                      >
-                        [{btn.toUpperCase()}]
-                      </button>
-                    )
+                      <>
+                        <WifiOff className="w-4 h-4 text-gray-500" />
+                        <span className="text-gray-500 text-sm">No Server</span>
+                      </>
+                    )}
+                  </div>
+
+                  {['Logs', 'Progression', 'Players', 'Teams'].map((btn) => (
+                    <button 
+                      key={btn} 
+                      onClick={() => handleButtonClick(btn)}
+                      data-testid={btn === 'Players' ? 'button-open-player-modal' : btn === 'Logs' ? 'button-open-logs-modal' : undefined} 
+                      className="px-4 py-2 bg-gradient-to-b from-orange-800/60 to-orange-900 hover:from-orange-700/80 hover:to-orange-800 text-orange-100 font-bold rounded shadow-lg border-2 border-orange-600/50 transition-all duration-200 hover:shadow-xl hover:shadow-orange-900/50 tracking-wide"
+                    >
+                      [{btn.toUpperCase()}]
+                    </button>
                   ))}
                 </div>
                 <div className="flex items-center">

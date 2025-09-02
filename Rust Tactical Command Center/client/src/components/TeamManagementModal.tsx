@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
-import { X, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, Plus, ChevronLeft, ChevronRight, Search, Monitor, CheckCircle, AlertCircle } from 'lucide-react'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { apiRequest } from '@/lib/queryClient'
 
 interface Squad {
   id: string
@@ -24,7 +26,10 @@ interface TeamManagementModalProps {
 export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProps) {
   const [selectedServer, setSelectedServer] = useState('')
   const [selectedMapOption, setSelectedMapOption] = useState('')
+  const [serverSearch, setServerSearch] = useState('')
+  const [showServerSearch, setShowServerSearch] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const queryClient = useQueryClient()
   const [squads, setSquads] = useState<Squad[]>([
     {
       id: '1',
@@ -36,6 +41,47 @@ export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProp
       }))
     }
   ])
+
+  // Fetch tracked servers
+  const { data: trackedServers = [] } = useQuery({
+    queryKey: ['/api/battlemetrics/servers'],
+    enabled: isOpen
+  })
+
+  // Fetch active server info
+  const { data: activeServer } = useQuery({
+    queryKey: ['/api/battlemetrics/servers/active'],
+    enabled: isOpen
+  })
+
+  // Search servers mutation
+  const searchServersMutation = useMutation({
+    mutationFn: async (query: string) => {
+      return apiRequest('GET', `/api/battlemetrics/search?query=${encodeURIComponent(query)}`)
+    }
+  })
+
+  // Add server mutation
+  const addServerMutation = useMutation({
+    mutationFn: async (serverId: string) => {
+      return apiRequest('POST', '/api/battlemetrics/servers', { serverId })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/battlemetrics/servers'] })
+      setShowServerSearch(false)
+      setServerSearch('')
+    }
+  })
+
+  // Select server mutation
+  const selectServerMutation = useMutation({
+    mutationFn: async (serverId: string) => {
+      return apiRequest('POST', `/api/battlemetrics/servers/${serverId}/select`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/battlemetrics/servers/active'] })
+    }
+  })
 
   if (!isOpen) return null
 
@@ -202,29 +248,139 @@ export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProp
               </h3>
               
               <div className="p-3 space-y-3">
+                {/* Active Server Display */}
+                {activeServer ? (
+                  <div className="bg-gray-900 border border-green-600/50 rounded p-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle className="h-4 w-4 text-green-400" />
+                      <span className="text-green-400 text-xs font-semibold">Active Server</span>
+                    </div>
+                    <div className="text-gray-200 text-xs font-medium mb-1">{activeServer.name}</div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-400">Players:</span>
+                        <span className="text-green-400">{activeServer.players || 0}/{activeServer.maxPlayers || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-400">Status:</span>
+                        <span className={activeServer.status === 'online' ? 'text-green-400' : 'text-red-400'}>
+                          {activeServer.status || 'Unknown'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-900 border border-orange-600/50 rounded p-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle className="h-4 w-4 text-orange-400" />
+                      <span className="text-orange-400 text-xs font-semibold">No Active Server</span>
+                    </div>
+                    <div className="text-gray-400 text-xs">Select a server to track player activity</div>
+                  </div>
+                )}
+
+                {/* Server Management */}
                 <div>
-                  <label className="block text-gray-400 text-xs mb-1">Select Server</label>
-                  <select 
-                    className="w-full bg-gray-900 border border-gray-600 text-gray-200 p-2 text-xs rounded cursor-pointer"
-                    value={selectedServer}
-                    onChange={(e) => toggleServerInfo(e.target.value)}
-                  >
-                    <option value="">-- Select Server --</option>
-                    <option value="test">Test Server</option>
-                    <option value="main">Main Server</option>
-                  </select>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-gray-400 text-xs">Tracked Servers</label>
+                    <button
+                      onClick={() => setShowServerSearch(!showServerSearch)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition-colors"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                  
+                  {/* Server Search */}
+                  {showServerSearch && (
+                    <div className="mb-2 space-y-2">
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          placeholder="Search BattleMetrics servers..."
+                          value={serverSearch}
+                          onChange={(e) => setServerSearch(e.target.value)}
+                          className="flex-1 bg-gray-900 border border-gray-600 text-gray-200 p-1 text-xs rounded"
+                        />
+                        <button
+                          onClick={() => searchServersMutation.mutate(serverSearch)}
+                          disabled={!serverSearch.trim() || searchServersMutation.isPending}
+                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white text-xs px-2 py-1 rounded transition-colors"
+                        >
+                          <Search className="h-3 w-3" />
+                        </button>
+                      </div>
+                      
+                      {/* Search Results */}
+                      {searchServersMutation.data && (
+                        <div className="max-h-32 overflow-y-auto bg-gray-800 border border-gray-600 rounded">
+                          {searchServersMutation.data.data?.map((server: any) => (
+                            <div key={server.id} className="p-1 hover:bg-gray-700 text-xs">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="text-gray-200 font-medium">{server.attributes.name}</div>
+                                  <div className="text-gray-400">{server.attributes.players}/{server.attributes.maxPlayers} players</div>
+                                </div>
+                                <button
+                                  onClick={() => addServerMutation.mutate(server.id)}
+                                  disabled={addServerMutation.isPending}
+                                  className="bg-green-600 hover:bg-green-700 text-white text-xs px-1 py-0.5 rounded"
+                                >
+                                  Add
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Tracked Servers List */}
+                  <div className="space-y-1 max-h-32 overflow-y-auto">
+                    {trackedServers.map((server: any) => (
+                      <div key={server.id} className="bg-gray-900 border border-gray-600 rounded p-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-gray-200 text-xs font-medium truncate">{server.name}</div>
+                            <div className="text-gray-400 text-xs">
+                              {server.players || 0}/{server.maxPlayers || 0} players
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => selectServerMutation.mutate(server.battlemetricsId)}
+                            disabled={selectServerMutation.isPending || activeServer?.battlemetricsId === server.battlemetricsId}
+                            className={`text-xs px-1 py-0.5 rounded transition-colors ${
+                              activeServer?.battlemetricsId === server.battlemetricsId
+                                ? 'bg-green-600 text-green-200'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                          >
+                            {activeServer?.battlemetricsId === server.battlemetricsId ? 'Active' : 'Select'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {trackedServers.length === 0 && (
+                      <div className="text-gray-400 text-xs text-center py-2">
+                        No servers tracked. Search and add servers above.
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {selectedServer && (
+                {activeServer && (
                   <>
                     <div className="space-y-2">
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Player Count:</span>
-                        <span className="text-green-400">--/--</span>
+                        <span className="text-green-400">{activeServer.players || 0}/{activeServer.maxPlayers || 0}</span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">Server Ping:</span>
-                        <span className="text-green-400">--ms</span>
+                        <span className="text-gray-400">Server Status:</span>
+                        <span className={activeServer.status === 'online' ? 'text-green-400' : 'text-red-400'}>
+                          {activeServer.status || 'Unknown'}
+                        </span>
                       </div>
                     </div>
 
