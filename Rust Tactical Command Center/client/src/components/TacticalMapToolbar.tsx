@@ -2,6 +2,9 @@ import { memo, useState, useEffect } from 'react'
 import WipeCountdownTimer from './WipeCountdownTimer'
 import { Calculator, Users, FileText, TrendingUp, Settings, Bot, Target, Wifi, WifiOff } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { TeamManagementModal } from './TeamManagementModal'
+import { PlayerModal } from './PlayerModal'
+import AdminModal from './AdminModal'
 
 interface TacticalMapToolbarProps {
   onButtonClick: (buttonType: string) => void
@@ -17,6 +20,9 @@ interface TacticalMapToolbarProps {
 
 const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progressionDisplay, onWipeCountdownChange }: TacticalMapToolbarProps) => {
   const [showMenuDropdown, setShowMenuDropdown] = useState(false)
+  const [teamManagementModalOpen, setTeamManagementModalOpen] = useState(false)
+  const [playerModalOpen, setPlayerModalOpen] = useState(false)
+  const [adminModalOpen, setAdminModalOpen] = useState(false)
 
   // Fetch active server status for BattleMetrics integration
   const { data: activeServer } = useQuery({
@@ -141,6 +147,15 @@ const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progression
           <div className="h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-70"></div>
         </div>
       </div>
+      <PlayerModal 
+        isOpen={playerModalOpen} 
+        onClose={() => setPlayerModalOpen(false)} 
+      />
+
+      <AdminModal 
+        isOpen={adminModalOpen} 
+        onClose={() => setAdminModalOpen(false)} 
+      />
     </div>
   )
 })
