@@ -1,6 +1,5 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth, isAuthenticated } from "./replitAuth.js";
 import { storage } from "./storage.js";
 import {
   createTeamSchema,
@@ -1028,8 +1027,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Initialize Replit Authentication
-  setupAuth(app);
+  // Setup authentication middleware
+  try {
+    setupAuth(app);
+  } catch (error) {
+    console.warn('Authentication setup failed, continuing without auth:', error);
+  }
 
   const httpServer = createServer(app);
 

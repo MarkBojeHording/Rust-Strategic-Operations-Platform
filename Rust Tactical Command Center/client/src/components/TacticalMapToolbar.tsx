@@ -1,10 +1,13 @@
 import { memo, useState, useEffect } from 'react'
 import WipeCountdownTimer from './WipeCountdownTimer'
-import { Calculator, Users, FileText, TrendingUp, Settings, Bot, Target, Wifi, WifiOff } from 'lucide-react'
+import { Calculator, Users, FileText, TrendingUp, Settings, Bot, Target, Wifi, WifiOff, LogOut } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { TeamManagementModal } from './TeamManagementModal'
 import { PlayerModal } from './PlayerModal'
 import AdminModal from './AdminModal'
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+
 
 interface TacticalMapToolbarProps {
   onButtonClick: (buttonType: string) => void
@@ -23,6 +26,8 @@ const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progression
   const [teamManagementModalOpen, setTeamManagementModalOpen] = useState(false)
   const [playerModalOpen, setPlayerModalOpen] = useState(false)
   const [adminModalOpen, setAdminModalOpen] = useState(false)
+  const [showProgressionModal, setShowProgressionModal] = useState(false);
+  const { user, isAuthenticated } = useAuth();
 
   // Fetch active server status for BattleMetrics integration
   const { data: activeServer } = useQuery({
@@ -66,47 +71,29 @@ const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progression
         <div className="bg-gradient-to-b from-gray-900 to-black rounded-lg shadow-2xl border-2 border-orange-600/50">
           <div className="bg-gradient-to-r from-orange-900/30 via-gray-800 to-orange-900/30 p-1">
             <div className="bg-gradient-to-b from-gray-800 to-gray-900 p-3">
-              <div className="flex items-center justify-between">
-                <div className="flex gap-2">
-                  {/* BattleMetrics Status Indicator */}
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-b from-gray-800/60 to-gray-900 rounded shadow-lg border-2 border-gray-600/50">
-                    {activeServer ? (
-                      <>
-                        <Wifi className="w-4 h-4 text-green-400" />
-                        <span className="text-green-400 text-sm font-medium">
-                          {activeServer.name?.substring(0, 20)}...
-                        </span>
-                        <span className="text-green-300 text-xs">
-                          ({activeServer.players || 0}/{activeServer.maxPlayers || 0})
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <WifiOff className="w-4 h-4 text-gray-500" />
-                        <span className="text-gray-500 text-sm">No Server</span>
-                      </>
-                    )}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Shield className="text-blue-400" size={28} />
+                    <h1 className="text-2xl font-bold text-white">Rust Tactical Command Center</h1>
                   </div>
-
-                  {['Logs', 'Progression', 'Players', 'Teams'].map((btn) => (
-                    <button 
-                      key={btn} 
-                      onClick={() => handleButtonClick(btn)}
-                      data-testid={btn === 'Players' ? 'button-open-player-modal' : btn === 'Logs' ? 'button-open-logs-modal' : undefined} 
-                      className="px-4 py-2 bg-gradient-to-b from-orange-800/60 to-orange-900 hover:from-orange-700/80 hover:to-orange-800 text-orange-100 font-bold rounded shadow-lg border-2 border-orange-600/50 transition-all duration-200 hover:shadow-xl hover:shadow-orange-900/50 tracking-wide"
-                    >
-                      [{btn.toUpperCase()}]
-                    </button>
-                  ))}
+                  {isAuthenticated && user && (
+                    <div className="flex items-center space-x-2 ml-8">
+                      <div className="text-sm text-gray-300">
+                        Welcome, <span className="font-semibold text-white">{user.firstName || user.email}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center">
                   <WipeCountdownTimer onCountdownChange={onWipeCountdownChange} />
                 </div>
                 <div className="flex gap-2">
-                  {['Gene Calculator', 'Turret Control'].map((btn) => (
+                  {['Logs', 'Progression', 'Players', 'Teams'].map((btn) => (
                     <button 
                       key={btn} 
                       onClick={() => handleButtonClick(btn)}
+                      data-testid={btn === 'Players' ? 'button-open-player-modal' : btn === 'Logs' ? 'button-open-logs-modal' : undefined} 
                       className="px-4 py-2 bg-gradient-to-b from-orange-800/60 to-orange-900 hover:from-orange-700/80 hover:to-orange-800 text-orange-100 font-bold rounded shadow-lg border-2 border-orange-600/50 transition-all duration-200 hover:shadow-xl hover:shadow-orange-900/50 tracking-wide"
                     >
                       [{btn.toUpperCase()}]
@@ -131,7 +118,10 @@ const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progression
                               e.stopPropagation()
                               if (option === 'Admin control') {
                                 setAdminModalOpen(true)
-                              } else {
+                              } else if (option === 'Team management') {
+                                setTeamManagementModalOpen(true)
+                              } else if (option === 'Settings') {
+                                // Assuming handleMenuOptionClick can handle 'Settings'
                                 handleMenuOptionClick(option)
                               }
                             }}
@@ -144,6 +134,22 @@ const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progression
                       </div>
                     )}
                   </div>
+                  {/* Progression Button */}
+                  <button
+                    onClick={() => setShowProgressionModal(true)}
+                    className="px-4 py-2 bg-gradient-to-b from-orange-800/60 to-orange-900 hover:from-orange-700/80 hover:to-orange-800 text-orange-100 font-bold rounded shadow-lg border-2 border-orange-600/50 transition-all duration-200 hover:shadow-xl hover:shadow-orange-900/50 tracking-wide"
+                  >
+                    [PROGRESSION]
+                  </button>
+                  {/* Logout Button */}
+                  <Button
+                    onClick={() => window.location.href = '/api/logout'}
+                    variant="outline"
+                    className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <LogOut size={18} />
+                    <span>Logout</span>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -151,15 +157,17 @@ const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progression
           <div className="h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-70"></div>
         </div>
       </div>
-      <PlayerModal 
-        isOpen={playerModalOpen} 
-        onClose={() => setPlayerModalOpen(false)} 
+      <PlayerModal
+        isOpen={playerModalOpen}
+        onClose={() => setPlayerModalOpen(false)}
       />
 
-      <AdminModal 
-        isOpen={adminModalOpen} 
-        onClose={() => setAdminModalOpen(false)} 
+      <AdminModal
+        isOpen={adminModalOpen}
+        onClose={() => setAdminModalOpen(false)}
       />
+      {/* Add ProgressionModal here if it's managed within this component */}
+      {/* <ProgressionModal isOpen={showProgressionModal} onClose={() => setShowProgressionModal(false)} /> */}
     </div>
   )
 })

@@ -1,11 +1,21 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes.js";
+import { setupAuth } from "./replitAuth.js";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedReportTemplates } from "./seed-templates";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Setup authentication first
+try {
+  await setupAuth(app);
+  console.log('✓ Authentication setup complete');
+} catch (error) {
+  console.warn('⚠ Authentication setup failed, continuing without auth:', error);
+}
+
 
 app.use((req, res, next) => {
   const start = Date.now();
