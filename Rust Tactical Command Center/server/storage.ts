@@ -52,7 +52,7 @@ export interface IStorage {
   // Player profile methods
   createPlayerProfile(profile: InsertPlayerProfile): Promise<PlayerProfile>;
   getPlayerProfile(playerName: string): Promise<PlayerProfile | undefined>;
-  updatePlayerProfile(playerName: string, profile: Partial<InsertPlayerProfile>): Promise<PlayerProfile>;
+  updatePlayerProfile(playerName: string, profile: Partial<InsertPlayerProfile>): Promise<PlayerProfile | undefined>;
   getAllPlayerProfiles(): Promise<PlayerProfile[]>;
   deletePlayerProfile(playerName: string): Promise<boolean>;
 

@@ -618,44 +618,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // BattleMetrics Integration Routes
 
-  // Get available servers for selection
+  // Get tracked servers
   app.get("/api/battlemetrics/servers", async (req, res) => {
     try {
-      const servers = await storage.getAllBattlemetricsServers();
-      res.json(servers);
+      const servers = await storage.getBattlemetricsServers()
+      res.json(servers)
     } catch (error) {
-      console.error("Error getting BattleMetrics servers:", error);
-      res.status(500).json({ error: "Failed to get servers" });
+      console.error("Error getting tracked servers:", error)
+      res.status(500).json({ error: "Failed to get tracked servers" })
     }
-  });
+  })
 
   // Search for servers to add
   app.get("/api/battlemetrics/search", async (req, res) => {
     try {
-      const { query } = req.query;
+      const { query } = req.query
       if (!query || typeof query !== 'string') {
-        return res.status(400).json({ error: "Search query required" });
+        return res.status(400).json({ error: "Search query required" })
       }
-      
-      const servers = await battleMetricsService.searchServers(query);
-      res.json(servers);
+
+      const servers = await battleMetricsService.searchServers(query)
+      res.json(servers)
     } catch (error) {
-      console.error("Error searching servers:", error);
-      res.status(500).json({ error: "Failed to search servers" });
+      console.error("Error searching servers:", error)
+      res.status(500).json({ error: "Failed to search servers" })
     }
-  });
+  })
 
   // Add a server for tracking
   app.post("/api/battlemetrics/servers", async (req, res) => {
     try {
-      const { serverId } = req.body;
+      const { serverId } = req.body
       if (!serverId) {
-        return res.status(400).json({ error: "Server ID required" });
+        return res.status(400).json({ error: "Server ID required" })
       }
 
       // Get server info from BattleMetrics
-      const serverInfo = await battleMetricsService.getServer(serverId);
-      
+      const serverInfo = await battleMetricsService.getServer(serverId)
+
       // Add to database
       const server = await storage.addBattlemetricsServer({
         id: serverInfo.id,
@@ -664,100 +664,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
         region: serverInfo.region,
         isSelected: false,
         isActive: true,
-      });
+      })
 
-      res.status(201).json(server);
+      res.status(201).json(server)
     } catch (error) {
-      console.error("Error adding server:", error);
-      res.status(500).json({ error: "Failed to add server" });
+      console.error("Error adding server:", error)
+      res.status(500).json({ error: "Failed to add server" })
     }
-  });
+  })
 
   // Select a server for tracking (sets as active)
   app.post("/api/battlemetrics/servers/:serverId/select", async (req, res) => {
     try {
-      const { serverId } = req.params;
-      
+      const { serverId } = req.params
+
       // Unselect all other servers and select this one
-      await storage.selectBattlemetricsServer(serverId);
-      
+      await storage.selectBattlemetricsServer(serverId)
+
       // Subscribe to WebSocket for this server
-      webSocketManager.subscribeToServer(serverId);
-      
-      res.json({ success: true, selectedServer: serverId });
+      webSocketManager.subscribeToServer(serverId)
+
+      res.json({ success: true, selectedServer: serverId })
     } catch (error) {
-      console.error("Error selecting server:", error);
-      res.status(500).json({ error: "Failed to select server" });
+      console.error("Error selecting server:", error)
+      res.status(500).json({ error: "Failed to select server" })
     }
-  });
+  })
 
   // Get current server info
   app.get("/api/battlemetrics/servers/:serverId", async (req, res) => {
     try {
-      const { serverId } = req.params;
-      const serverInfo = await battleMetricsService.getServer(serverId);
-      res.json(serverInfo);
+      const { serverId } = req.params
+      const serverInfo = await battleMetricsService.getServer(serverId)
+      res.json(serverInfo)
     } catch (error) {
-      console.error("Error getting server info:", error);
-      res.status(500).json({ error: "Failed to get server info" });
+      console.error("Error getting server info:", error)
+      res.status(500).json({ error: "Failed to get server info" })
     }
-  });
+  })
 
   // Get live players for selected server
   app.get("/api/battlemetrics/servers/:serverId/players", async (req, res) => {
     try {
-      const { serverId } = req.params;
-      const players = await battleMetricsService.getPlayers(serverId);
-      
+      const { serverId } = req.params
+      const players = await battleMetricsService.getPlayers(serverId)
+
       // Enhance with local profile data if available
       const enhancedPlayers = await Promise.all(players.map(async (player) => {
-        const profile = await storage.getPlayerProfileByBattlemetricsId(player.id);
+        const profile = await storage.getPlayerProfileByBattlemetricsId(player.id)
         return {
           ...player,
           profile: profile || null, // Include local profile data for aliases, notes, etc.
-        };
-      }));
-      
-      res.json(enhancedPlayers);
+        }
+      }))
+
+      res.json(enhancedPlayers)
     } catch (error) {
-      console.error("Error getting server players:", error);
-      res.status(500).json({ error: "Failed to get server players" });
+      console.error("Error getting server players:", error)
+      res.status(500).json({ error: "Failed to get server players" })
     }
-  });
+  })
 
   // Get player profiles from local database
   app.get("/api/player-profiles", async (req, res) => {
     try {
-      const profiles = await storage.getAllPlayerProfiles();
-      res.json(profiles);
+      const profiles = await storage.getAllPlayerProfiles()
+      res.json(profiles)
     } catch (error) {
-      console.error("Error getting player profiles:", error);
-      res.status(500).json({ error: "Failed to get player profiles" });
+      console.error("Error getting player profiles:", error)
+      res.status(500).json({ error: "Failed to get player profiles" })
     }
-  });
+  })
 
   // Admin routes for monitoring tracking status
   app.get("/api/admin/tracking-status", async (req, res) => {
     try {
       let selectedServer = null;
       let totalProfiles = 0;
-      
+
       // Safely get selected server
       try {
         selectedServer = await storage.getSelectedBattlemetricsServer();
       } catch (error) {
         console.warn("Could not get selected server:", error);
       }
-      
+
       // Safely get player profile count
       try {
         totalProfiles = await storage.getPlayerProfileCount();
       } catch (error) {
         console.warn("Could not get player profile count:", error);
       }
-      
+
       const subscribedServers = webSocketManager.getSubscribedServers();
-      
+
       res.json({
         selectedServer: selectedServer?.id || null,
         selectedServerName: selectedServer?.name || null,

@@ -1,4 +1,3 @@
-
 import WebSocket from 'ws';
 import { playerActivityTracker } from './playerActivityTracker';
 
@@ -19,7 +18,7 @@ export class WebSocketManager {
 
       this.ws.on('open', () => {
         console.log('✓ Connected to BattleMetrics WebSocket');
-        
+
         // Re-subscribe to all previously subscribed servers
         this.subscribedServers.forEach(serverId => {
           this.subscribeToServer(serverId);
@@ -55,7 +54,7 @@ export class WebSocketManager {
     if (this.reconnectInterval) {
       clearTimeout(this.reconnectInterval);
     }
-    
+
     this.reconnectInterval = setTimeout(() => {
       console.log('Attempting to reconnect to BattleMetrics WebSocket...');
       this.connect();
@@ -68,7 +67,7 @@ export class WebSocketManager {
         type: 'subscribe',
         channels: [`server:${serverId}`]
       };
-      
+
       this.ws.send(JSON.stringify(subscribeMessage));
       this.subscribedServers.add(serverId);
       playerActivityTracker.setActiveServer(serverId);
@@ -84,7 +83,7 @@ export class WebSocketManager {
         type: 'unsubscribe',
         channels: [`server:${serverId}`]
       };
-      
+
       this.ws.send(JSON.stringify(unsubscribeMessage));
       this.subscribedServers.delete(serverId);
       console.log(`Unsubscribed from server ${serverId}`);
@@ -95,16 +94,16 @@ export class WebSocketManager {
     try {
       if (message.type === 'player_activity') {
         const { player, server, action, timestamp } = message.data;
-        
+
         // Create unique event ID to prevent duplicate processing
         const eventId = `${server.id}_${player.id}_${action}_${timestamp}`;
-        
+
         if (this.processedEvents.has(eventId)) {
           return; // Skip duplicate event
         }
-        
+
         this.processedEvents.add(eventId);
-        
+
         // Clean up old processed events (keep only last 1000)
         if (this.processedEvents.size > 1000) {
           const eventsArray = Array.from(this.processedEvents);
@@ -135,12 +134,12 @@ export class WebSocketManager {
       clearTimeout(this.reconnectInterval);
       this.reconnectInterval = null;
     }
-    
+
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
-    
+
     console.log('WebSocket disconnected');
   }
 }
