@@ -5,7 +5,7 @@
  */
 
 // PNG Asset Imports
-import rifleBoltPng from '@assets/rifle.bolt_1756547259710.png'
+import rifleBoltPng from '@assets/rifle.bolt.png'
 import oreteaPurePng from '@assets/oretea.pure_1756547259710.png'
 import syringeMedicalPng from '@assets/syringe.medical_1756547259710.png'
 import hazmatsuitPng from '@assets/hazmatsuit_1756547259711.png'
@@ -17,19 +17,19 @@ export const TASK_ICONS = {
   ORE_PICKUP: '🪨',      // Stone/ore pickup tasks
   LOOT_PICKUP: '📦',     // Loot/package pickup tasks
   RESOURCE_REQUEST: '📋', // General resource requests
-  
+
   // Kit and supply tasks
   KIT_REQUEST: '🎒',     // Kit/supply requests (backpack icon for gear)
   MEDICAL_SUPPLY: '🩹',  // Medical supply requests
-  
+
   // Base maintenance tasks
   REPAIR: '🔧',          // Repair tasks
   UPGRADE: '🚧',         // Upgrade/construction tasks
-  
+
   // Timing and scheduling
   DECAY_TIMER: '⏰',     // Decay timing tasks
   SCHEDULE: '📅',        // Scheduled tasks
-  
+
   // Status indicators
   URGENT: '🚨',          // High priority tasks
   COMPLETED: '✅',       // Completed tasks
@@ -187,10 +187,10 @@ export function getTaskIcon(taskType: string, subType?: string): string {
 // Helper function to get active kit data for dynamic display
 export function getActiveKits(kitResources: any): Array<{ kitType: string; amount: string; iconData: any }> {
   if (!kitResources) return []
-  
+
   // Define the display order: fullkit (metal), hazzy, meds, bolty, teas
   const displayOrder = ['fullkit', 'hazzy', 'meds', 'bolty', 'teas']
-  
+
   const activeKits = Object.entries(kitResources)
     .filter(([_, amount]) => amount && parseInt(amount as string) > 0)
     .map(([kitType, amount]) => ({
@@ -198,7 +198,7 @@ export function getActiveKits(kitResources: any): Array<{ kitType: string; amoun
       amount: amount as string,
       iconData: getKitIconData(kitType)
     }))
-  
+
   // Sort by display order
   return activeKits.sort((a, b) => {
     const orderA = displayOrder.indexOf(a.kitType)
