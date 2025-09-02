@@ -5,7 +5,7 @@ modules = ["nodejs-20", "web", "python-3.12"]
 channel = "stable-25_05"
 
 [workflows]
-runButton = "Run Tactical Command Center"
+runButton = "Start Tactical Center"
 
 [[workflows.workflow]]
 name = "Run Tactical Command Center"
@@ -15,6 +15,15 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd \"Rust Tactical Command Center\" && npm install"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd \"Rust Tactical Command Center\" && npm run dev"
+
+[[workflows.workflow]]
+name = "Start Tactical Center"
+author = 47018196
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
