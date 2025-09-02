@@ -739,9 +739,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes for monitoring tracking status
   app.get("/api/admin/tracking-status", async (req, res) => {
     try {
-      const selectedServer = await storage.getSelectedBattlemetricsServer();
+      let selectedServer = null;
+      let totalProfiles = 0;
+      
+      // Safely get selected server
+      try {
+        selectedServer = await storage.getSelectedBattlemetricsServer();
+      } catch (error) {
+        console.warn("Could not get selected server:", error);
+      }
+      
+      // Safely get player profile count
+      try {
+        totalProfiles = await storage.getPlayerProfileCount();
+      } catch (error) {
+        console.warn("Could not get player profile count:", error);
+      }
+      
       const subscribedServers = webSocketManager.getSubscribedServers();
-      const totalProfiles = await storage.getPlayerProfileCount();
       
       res.json({
         selectedServer: selectedServer?.id || null,
@@ -750,10 +765,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalPlayerProfiles: totalProfiles,
         websocketConnected: webSocketManager.isConnected(),
         trackingActive: selectedServer !== null,
+        timestamp: new Date().toISOString(),
       });
     } catch (error) {
       console.error("Error getting tracking status:", error);
-      res.status(500).json({ error: "Failed to get tracking status" });
+      res.status(500).json({ 
+        error: "Failed to get tracking status",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

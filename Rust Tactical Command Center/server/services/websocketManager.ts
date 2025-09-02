@@ -126,6 +126,10 @@ export class WebSocketManager {
     return Array.from(this.subscribedServers);
   }
 
+  isConnected(): boolean {
+    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+  }
+
   disconnect(): void {
     if (this.reconnectInterval) {
       clearTimeout(this.reconnectInterval);
