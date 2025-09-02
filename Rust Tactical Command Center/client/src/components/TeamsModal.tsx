@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
+
+import { useState, useEffect, useCallback } from 'react'
 import { X, Castle, Home, Tent, Shield, Wheat, FileText, Clock, Skull, Rocket, Users } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
 import type { ExternalPlayer } from '@shared/schema'
 
 const ICON_MAP = {
@@ -20,6 +20,42 @@ interface TeamsModalProps {
 }
 
 export function TeamsModal({ isOpen, onClose, locations, players, onOpenBaseModal }: TeamsModalProps) {
+  const [reports, setReports] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Fetch reports when modal opens
+  const fetchReports = useCallback(async () => {
+    if (!isOpen) return
+    
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/reports')
+      if (response.ok) {
+        const data = await response.json()
+        setReports(data || [])
+      } else {
+        setReports([])
+      }
+    } catch (error) {
+      console.warn('Failed to fetch reports:', error)
+      setReports([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchReports()
+      // Set up interval for updates
+      const interval = setInterval(fetchReports, 30000)
+      return () => clearInterval(interval)
+    } else {
+      // Clear reports when modal closes
+      setReports([])
+    }
+  }, [isOpen, fetchReports])
+
   if (!isOpen) return null
 
   // Filter to only enemy main bases (small, medium, large)
@@ -28,18 +64,6 @@ export function TeamsModal({ isOpen, onClose, locations, players, onOpenBaseModa
     location.type === 'enemy-medium' || 
     location.type === 'enemy-large'
   )
-
-  // Fetch reports data - simplified approach to avoid React internal errors
-  const { data: reports = [] } = useQuery({
-    queryKey: ['teams-modal-reports'],
-    queryFn: async () => {
-      const response = await fetch('/api/reports')
-      return response.ok ? response.json() : []
-    },
-    enabled: isOpen,
-    staleTime: 30000,
-    retry: false
-  })
 
   const getBaseIcon = (type: string) => {
     const IconComponent = ICON_MAP[type as keyof typeof ICON_MAP] || Tent
@@ -120,7 +144,11 @@ export function TeamsModal({ isOpen, onClose, locations, players, onOpenBaseModa
 
         {/* Content */}
         <div className="p-4 h-full overflow-y-auto">
-          {enemyMainBases.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center text-gray-500 mt-8">
+              Loading teams data...
+            </div>
+          ) : enemyMainBases.length === 0 ? (
             <div className="text-center text-gray-500 mt-8">
               No enemy main bases found
             </div>
