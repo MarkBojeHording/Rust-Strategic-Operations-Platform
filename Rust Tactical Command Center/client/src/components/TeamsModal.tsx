@@ -128,7 +128,7 @@ export function TeamsModal({ isOpen, onClose, locations, players, onOpenBaseModa
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
       <div 
         className="bg-gray-900 border border-orange-600/50 shadow-2xl rounded-lg"
-        style={{ width: '1000px', height: '800px' }}
+        style={{ width: '1000px', height: '480px' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-orange-600/30">
