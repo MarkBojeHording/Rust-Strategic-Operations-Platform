@@ -1,0 +1,118 @@
+Replit Prompt — Extend AdminModal into Full BattleMetrics Dashboard
+
+Context:
+
+Current AdminModal only manages users + teams via /api/admin/users and /api/admin/teams.
+
+BattleMetrics integration exists separately in battlemetrics.ts but is not connected to admin routes.
+
+Client requires backend control over which servers are tracked + system diagnostics.
+
+🔧 Task for Replit
+
+1. Backend — Add New Admin Routes
+Create new routes under /api/admin/bm/* in the Express server:
+
+GET /servers/available
+→ List all BattleMetrics servers from cache or API.
+→ Paginate results, include fields: { id, name, region, online, playerCount }.
+
+GET /servers/tracked
+→ Return servers currently being monitored.
+
+POST /servers/tracked
+→ Body: { bmServerId: string } → Add server to tracking list.
+
+DELETE /servers/tracked/:bmServerId
+→ Remove server from tracking.
+
+GET /status
+→ Return system diagnostics:
+
+{
+  battlemetricsApi: { healthy: boolean; rateLimit?: { limit:number; remaining:number; resetAt:string } },
+  websocket: { connected: boolean; lastHeartbeatAt?: string },
+  database: { healthy: boolean; latencyMs?: number },
+  errors: Array<{ time:string; scope:string; message:string }>
+}
+
+
+2. Database Updates
+Add two tables (using existing ORM or migrations):
+
+bm_servers
+
+bm_server_id (PK), name, region, ip, port, online, player_count, last_seen, updated_at
+
+
+bm_tracked_servers
+
+bm_server_id (FK → bm_servers), added_by_user_id, added_at, active (bool)
+
+
+3. Frontend — Extend AdminModal
+Modify AdminModal.tsx to add two new tabs alongside User Management + Team Management:
+
+Server Management Tab
+
+Show “Available Servers” (GET /api/admin/bm/servers/available).
+
+Show “Tracked Servers” (GET /api/admin/bm/servers/tracked).
+
+Buttons:
+
+Track → calls POST
+
+Untrack → calls DELETE
+
+Display server status: online/offline, player counts, region.
+
+System Diagnostics Tab
+
+Fetch data from GET /api/admin/bm/status.
+
+Show:
+
+BattleMetrics API health + rate limit info
+
+WebSocket status + last heartbeat
+
+Database latency check
+
+Error logs (last 20)
+
+Use badges/cards with the same orange/dark theme.
+
+4. Security
+
+Ensure all /api/admin/bm/* routes require admin role (reuse your existing auth middleware).
+
+✅ Acceptance Criteria
+
+AdminModal now has 4 tabs:
+
+User Management (unchanged)
+
+Team Management (unchanged)
+
+Server Management (new)
+
+System Diagnostics (new)
+
+I can add/remove BattleMetrics servers for tracking via the modal.
+
+I can see system health + error logs inside the modal.
+
+Existing user/team functionality remains intact.
+
+⚠️ Guardrails
+
+Do not rename or move AdminModal, only extend it.
+
+Do not break existing /api/admin/users or /api/admin/teams.
+
+Reuse the existing fetch utils/hooks and styling conventions.
+
+Keep DB schema consistent with your ORM conventions.
+
+👉 Implement this now: extend AdminModal into a full backend control dashboard for BattleMetrics, while preserving existing user/team features.
