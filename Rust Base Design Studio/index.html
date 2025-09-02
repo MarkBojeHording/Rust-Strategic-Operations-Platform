@@ -10,6 +10,57 @@
     <script src="js/managers/ToolManager.js"></script>
     <script src="js/managers/TurretManager.js"></script>
     <script src="js/managers/FloorManager.js"></script>
+    
+    <!-- Wait for all scripts to load before initializing -->
+    <script>
+        // Ensure all manager classes are available before proceeding
+        window.addEventListener('DOMContentLoaded', function() {
+            // Small delay to ensure all scripts are fully loaded
+            setTimeout(function() {
+                if (typeof SelectionManager === 'undefined') {
+                    console.error('SelectionManager not loaded, creating fallback');
+                    window.SelectionManager = class SelectionManager {
+                        constructor() {
+                            this.selectedItem = null;
+                            this.selectedType = null;
+                            this.initialized = true;
+                        }
+                        selectItem(item, type) {
+                            this.clearSelection();
+                            this.selectedItem = item;
+                            this.selectedType = type;
+                            if (item) item.selected = true;
+                        }
+                        clearSelection() {
+                            if (this.selectedItem) this.selectedItem.selected = false;
+                            this.selectedItem = null;
+                            this.selectedType = null;
+                        }
+                        getSelected() {
+                            return { item: this.selectedItem, type: this.selectedType };
+                        }
+                        isSelected(item) {
+                            return this.selectedItem === item;
+                        }
+                        hasSelection() {
+                            return this.selectedItem !== null;
+                        }
+                    };
+                }
+                
+                if (typeof ToolManager === 'undefined') {
+                    console.error('ToolManager not loaded, creating fallback');
+                    window.ToolManager = class ToolManager {
+                        constructor() {
+                            this.currentTool = null;
+                            this.initialized = true;
+                        }
+                    };
+                }
+            }, 100);
+        });
+    </script>
+    
     <script>
         // Fallback empty classes if modules don't exist
         window.Turret = window.Turret || class Turret {

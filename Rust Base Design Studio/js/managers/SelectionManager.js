@@ -1,74 +1,57 @@
-
 // Selection management module
 
 class SelectionManager {
     constructor() {
-        this.selectedItems = {
-            shape: null,
-            turret: null,
-            wall: null,
-            wall2: null,
-            reinforcedWall: null,
-            garageDoor: null,
-            securityGate: null,
-            singlePost: null
-        };
+        this.selectedItem = null;
+        this.selectedType = null;
         this.initialized = true;
     }
-    
-    deselectAll(allItems = []) {
-        allItems.forEach(item => {
-            if (item && typeof item === 'object') {
-                item.selected = false;
-            }
-        });
-        
-        Object.keys(this.selectedItems).forEach(key => {
-            this.selectedItems[key] = null;
-        });
-    }
-    
+
+    // Select an item with type tracking
     selectItem(item, type) {
-        // First deselect everything
-        if (window.gameState) {
-            const allItems = window.gameState.getAllItems();
-            this.deselectAll(allItems);
-        }
-        
-        // Select the new item
-        item.selected = true;
-        this.selectedItems[type] = item;
-        
-        // Update UI if function exists
-        if (typeof window.updateSelectedInfo === 'function') {
-            window.updateSelectedInfo();
+        this.clearSelection();
+        this.selectedItem = item;
+        this.selectedType = type;
+
+        if (item) {
+            item.selected = true;
         }
     }
-    
-    getSelectedItem() {
-        for (const [type, item] of Object.entries(this.selectedItems)) {
-            if (item) {
-                return { item, type };
-            }
+
+    // Clear current selection
+    clearSelection() {
+        if (this.selectedItem) {
+            this.selectedItem.selected = false;
         }
-        return null;
+        this.selectedItem = null;
+        this.selectedType = null;
     }
-    
-    getSelected(type) {
-        return this.selectedItems[type];
+
+    // Get currently selected item
+    getSelected() {
+        return {
+            item: this.selectedItem,
+            type: this.selectedType
+        };
     }
-    
-    clearSelection(type) {
-        if (this.selectedItems[type]) {
-            this.selectedItems[type].selected = false;
-            this.selectedItems[type] = null;
-        }
+
+    // Check if an item is selected
+    isSelected(item) {
+        return this.selectedItem === item;
+    }
+
+    // Check if any item is selected
+    hasSelection() {
+        return this.selectedItem !== null;
     }
 }
 
 // Export for both browser and Node.js environments
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = SelectionManager;
-} else if (typeof window !== 'undefined') {
+}
+
+// Make sure it's available globally in browser
+if (typeof window !== 'undefined') {
     window.SelectionManager = SelectionManager;
 }
