@@ -183,11 +183,11 @@ export const playerActivities = pgTable("player_activities", {
   playerId: text("player_id"), // BattleMetrics player ID if available
   action: text("action").notNull(), // 'joined' or 'left'
   timestamp: timestamp("timestamp").notNull(),
-  
+
   // Additional metadata
   playerRank: integer("player_rank"),
   playerScore: integer("player_score"),
-  
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
   profileIdx: index("profile_activities_idx").on(table.profileId),
@@ -202,24 +202,24 @@ export const playerProfiles = pgTable("player_profiles", {
   serverId: text("server_id").notNull().references(() => servers.id),
   playerName: text("player_name").notNull(),
   playerId: text("player_id"), // BattleMetrics player ID if available
-  
+
   // Current status
   isOnline: boolean("is_online").default(false).notNull(),
   currentSessionStart: timestamp("current_session_start"),
-  
+
   // Last activity tracking
   lastJoinTime: timestamp("last_join_time"),
   lastLeaveTime: timestamp("last_leave_time"),
   lastSeenTime: timestamp("last_seen_time").defaultNow().notNull(),
-  
+
   // Statistics
   totalSessions: integer("total_sessions").default(0).notNull(),
   totalPlayTimeMinutes: integer("total_play_time_minutes").default(0).notNull(),
-  
+
   // Player metadata
   lastKnownRank: integer("last_known_rank"),
   lastKnownScore: integer("last_known_score"),
-  
+
   // Timestamps
   firstSeenAt: timestamp("first_seen_at").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -237,20 +237,20 @@ export const playerSessions = pgTable("player_sessions", {
   serverId: text("server_id").notNull().references(() => servers.id),
   playerName: text("player_name").notNull(),
   playerId: text("player_id"), // BattleMetrics player ID if available
-  
+
   // Session timing
   joinTime: timestamp("join_time").notNull(),
   leaveTime: timestamp("leave_time"),
   durationMinutes: integer("duration_minutes"), // Session duration in minutes
   isActive: boolean("is_active").default(true).notNull(), // Player still online
-  
+
   // Player info at time of session
   playerRank: integer("player_rank"),
   playerScore: integer("player_score"),
-  
+
   // Session metadata
   sessionType: text("session_type").default("normal"), // 'normal', 'premium'
-  
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => ({

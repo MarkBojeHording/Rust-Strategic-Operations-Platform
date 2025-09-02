@@ -71,7 +71,7 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
-    
+
     // Start persistent WebSocket connection for real-time tracking
     globalWebSocketManager.connect().catch(error => {
       console.error('Failed to start WebSocket manager:', error);
