@@ -19,3 +19,7 @@ args = "cd \"Rust Tactical Command Center\" && npm install"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd \"Rust Tactical Command Center\" && npm run dev"
+
+[[ports]]
+localPort = 5000
+externalPort = 80
