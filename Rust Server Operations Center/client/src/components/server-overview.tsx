@@ -110,7 +110,7 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
     <>
       {/* Server Info Card */}
       <div className="lg:col-span-2">
-        <Card className="bg-surface border-gray-700 h-full">
+        <Card className="bg-gray-100 border-gray-200 h-full">
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -301,7 +301,7 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
 
       {/* Quick Actions */}
       <div className="lg:col-span-2">
-        <Card className="bg-surface border-gray-700 h-full">
+        <Card className="bg-gray-100 border-gray-200 h-full">
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold mb-4">Server Actions</h3>
             <div className="space-y-3">

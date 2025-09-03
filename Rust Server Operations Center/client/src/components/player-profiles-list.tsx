@@ -71,7 +71,7 @@ const PlayerSessionHistory = ({ profileId, playerName, isOpen, onClose }: Player
           ) : (
             <div className="space-y-3">
               {sessions?.map((session) => (
-                <Card key={session.id} className="bg-slate-800 border-slate-700">
+                <Card key={session.id} className="bg-gray-100 border-gray-200">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-2">
@@ -182,7 +182,7 @@ export function PlayerProfilesList({ serverId, isLoading: parentLoading }: Playe
 
   if (parentLoading || isLoading) {
     return (
-      <Card className="bg-surface border-gray-700">
+      <Card className="bg-gray-100 border-gray-200">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Users className="h-5 w-5" />
@@ -202,7 +202,7 @@ export function PlayerProfilesList({ serverId, isLoading: parentLoading }: Playe
 
   return (
     <>
-      <Card className="bg-surface border-gray-700">
+      <Card className="bg-gray-100 border-gray-200">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
