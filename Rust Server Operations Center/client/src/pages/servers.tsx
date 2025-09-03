@@ -525,14 +525,14 @@ export default function ServersPage() {
   }
 
   return (
-    <div className="h-screen grid grid-cols-2 bg-slate-900">
+    <div className="h-screen grid grid-cols-2 bg-gray-50">
       {/* Left Half - Server Management */}
       <div className="p-6 space-y-6 overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Server Management</h1>
-            <p className="text-slate-400 mt-2">Add and monitor your BattleMetrics servers</p>
+            <h1 className="text-3xl font-bold text-gray-900">Server Management</h1>
+            <p className="text-gray-600 mt-2">Add and monitor your BattleMetrics servers</p>
           </div>
           <div className="flex items-center gap-3">
             <Button 
@@ -545,33 +545,33 @@ export default function ServersPage() {
               <Trash2 size={16} className="mr-2" />
               {deleteAllDataMutation.isPending ? 'Deleting...' : 'Delete All Data'}
             </Button>
-            <Badge variant="outline" className="text-slate-400 border-slate-600">
+            <Badge variant="outline" className="text-gray-600 border-gray-300">
               {servers.length} {servers.length === 1 ? 'Server' : 'Servers'}
             </Badge>
           </div>
         </div>
 
         {/* Database Metrics Section */}
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardContent className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Database Usage */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-slate-300">Database Usage</span>
+                  <span className="text-sm font-medium text-gray-700">Database Usage</span>
                 </div>
                 {dbMetricsLoading ? (
-                  <div className="text-slate-400 text-sm">Loading...</div>
+                  <div className="text-gray-500 text-sm">Loading...</div>
                 ) : dbMetrics ? (
                   <>
-                    <div className="text-lg font-semibold text-white">
+                    <div className="text-lg font-semibold text-gray-900">
                       {dbMetrics.database.size} / {dbMetrics.database.limit}
                     </div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-gray-500">
                       {dbMetrics.database.usagePercentage}% used
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${Math.min(dbMetrics.database.usagePercentage, 100)}%` }}
@@ -590,13 +590,13 @@ export default function ServersPage() {
                   <span className="text-sm font-medium text-gray-300">Data Per Hour</span>
                 </div>
                 {dbMetricsLoading ? (
-                  <div className="text-slate-400 text-sm">Loading...</div>
+                  <div className="text-gray-500 text-sm">Loading...</div>
                 ) : dbMetrics ? (
                   <>
-                    <div className="text-lg font-semibold text-white">
+                    <div className="text-lg font-semibold text-gray-900">
                       {dbMetrics.usage.avgDataPerHourFormatted}
                     </div>
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-gray-500">
                       {dbMetrics.usage.avgActivitiesPerHour} activities/hr avg
                     </div>
                   </>
@@ -612,13 +612,13 @@ export default function ServersPage() {
                   <span className="text-sm font-medium text-gray-300">Storage Breakdown</span>
                 </div>
                 {dbMetricsLoading ? (
-                  <div className="text-slate-400 text-sm">Loading...</div>
+                  <div className="text-gray-500 text-sm">Loading...</div>
                 ) : dbMetrics ? (
                   <>
-                    <div className="text-sm text-slate-300">
+                    <div className="text-sm text-gray-700">
                       Maps: {dbMetrics.tables.maps.size} ({dbMetrics.tables.maps.count})
                     </div>
-                    <div className="text-sm text-slate-300">
+                    <div className="text-sm text-gray-700">
                       Activities: {dbMetrics.tables.activities.size} ({dbMetrics.tables.activities.count})
                     </div>
                   </>
@@ -631,7 +631,7 @@ export default function ServersPage() {
         </Card>
 
         {/* Add Server Section */}
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-white border-gray-200 shadow-sm">
           <CardContent className="p-6">
             <h2 className="text-lg font-semibold text-white mb-4">Add New Server</h2>
             <div className="flex gap-3">
@@ -639,13 +639,13 @@ export default function ServersPage() {
                 placeholder="https://www.battlemetrics.com/servers/rust/2933470"
                 value={newServerUrl}
                 onChange={(e) => setNewServerUrl(e.target.value)}
-                className="flex-1 bg-slate-700 border-slate-600 text-white"
+                className="flex-1 bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500"
                 data-testid="input-server-url"
               />
               <Button 
                 onClick={handleAddServer}
                 disabled={!newServerUrl.trim() || addServerMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-500 hover:bg-blue-600"
                 data-testid="button-add-server"
               >
                 <Plus size={16} className="mr-2" />
@@ -660,7 +660,7 @@ export default function ServersPage() {
 
         {/* Server Grid */}
         {servers.length === 0 ? (
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardContent className="p-12 text-center">
               <div className="text-slate-400 mb-4">No servers added yet</div>
               <p className="text-sm text-slate-500">
@@ -834,7 +834,7 @@ export default function ServersPage() {
                 <Button
                   size="sm"
                   onClick={() => setShowCreateUser(true)}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-blue-500 hover:bg-blue-600"
                   data-testid="button-create-user"
                 >
                   <UserPlus size={14} className="mr-1" />

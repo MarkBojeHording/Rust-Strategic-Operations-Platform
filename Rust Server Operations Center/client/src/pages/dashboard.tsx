@@ -135,21 +135,21 @@ export default function Dashboard() {
   const connectionStatus = getConnectionStatus();
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-slate-800 border-b border-slate-700 sticky top-0 z-50">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/servers">
-                <Button variant="secondary" size="sm" className="mr-4 bg-slate-700 hover:bg-slate-600 text-white border-slate-600">
+                <Button variant="secondary" size="sm" className="mr-4 bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300">
                   <ArrowLeft size={16} className="mr-2" />
                   Back to Servers
                 </Button>
               </Link>
               <div className="flex items-center space-x-2">
-                <ServerIcon className="text-primary text-2xl" size={32} />
-                <h1 className="text-2xl font-bold text-white">Server Dashboard</h1>
+                <ServerIcon className="text-blue-500 text-2xl" size={32} />
+                <h1 className="text-2xl font-bold text-gray-900">Server Dashboard</h1>
               </div>
             </div>
             
@@ -161,12 +161,12 @@ export default function Dashboard() {
                 value={serverId}
                 onChange={(e) => setServerId(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="w-48 bg-slate-700 border-slate-600 text-white placeholder-slate-400"
+                className="w-48 bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500"
                 data-testid="input-server-id"
               />
               <Button 
                 onClick={handleConnect}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-500 hover:bg-blue-600 text-white"
                 data-testid="button-connect"
               >
                 <Plug className="mr-2" size={16} />
@@ -175,7 +175,7 @@ export default function Dashboard() {
               <Button 
                 onClick={handleRefresh}
                 variant="outline"
-                className="bg-slate-700 hover:bg-slate-600 border-slate-600"
+                className="bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700"
                 title="Refresh Data"
                 data-testid="button-refresh"
               >
@@ -199,7 +199,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-6 py-8">
         {/* Connection Status */}
         <div className="mb-6">
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-white border-gray-200 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -208,7 +208,7 @@ export default function Dashboard() {
                     {connectionStatus.text}
                   </span>
                 </div>
-                <div className="text-sm text-slate-400" data-testid="text-last-update">
+                <div className="text-sm text-gray-500" data-testid="text-last-update">
                   Last update: {new Date().toLocaleTimeString()}
                 </div>
               </div>
@@ -219,11 +219,11 @@ export default function Dashboard() {
         {/* Loading State */}
         {isLoading && (
           <div className="mb-8">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card className="bg-white border-gray-200 shadow-sm">
               <CardContent className="p-8">
                 <div className="flex flex-col items-center space-y-4">
                   <Loader2 className="animate-spin h-12 w-12 text-blue-500" />
-                  <p className="text-slate-300">Loading server data...</p>
+                  <p className="text-gray-600">Loading server data...</p>
                 </div>
               </CardContent>
             </Card>
@@ -239,7 +239,7 @@ export default function Dashboard() {
                   <div className="text-red-500 text-xl">⚠️</div>
                   <div>
                     <h3 className="font-semibold text-red-500">Connection Error</h3>
-                    <p className="text-slate-300 mt-1" data-testid="text-error-message">
+                    <p className="text-gray-600 mt-1" data-testid="text-error-message">
                       {hasError instanceof Error ? hasError.message : 'Failed to connect to BattleMetrics API. Please check the server ID and try again.'}
                     </p>
                   </div>

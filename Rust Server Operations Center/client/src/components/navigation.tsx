@@ -59,19 +59,19 @@ export function Navigation() {
   };
 
   return (
-    <nav className="bg-surface border-b border-gray-700 sticky top-0 z-50">
+    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo/Title */}
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center">
               <Activity className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-white">
+              <h1 className="text-lg font-semibold text-gray-900">
                 Rust Server Operations Center
               </h1>
-              <p className="text-xs text-gray-400">BattleMetrics Integration</p>
+              <p className="text-xs text-gray-500">BattleMetrics Integration</p>
             </div>
           </div>
 
@@ -87,10 +87,10 @@ export function Navigation() {
                     variant={isActive ? 'default' : 'ghost'}
                     size="sm"
                     className={`
-                      flex items-center space-x-2 text-sm h-9 px-3
+                      flex items-center space-x-2 text-sm h-9 px-3 rounded-md
                       ${isActive 
-                        ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                        : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                        ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }
                     `}
                   >
@@ -104,12 +104,12 @@ export function Navigation() {
             {/* Logout Button */}
             {isAuthenticated && (
               <>
-                <div className="w-px h-6 bg-gray-600 mx-2" />
+                <div className="w-px h-6 bg-gray-300 mx-2" />
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleLogout}
-                  className="flex items-center space-x-2 text-sm h-9 px-3 text-gray-300 hover:text-white hover:bg-red-600"
+                  className="flex items-center space-x-2 text-sm h-9 px-3 rounded-md text-gray-600 hover:text-white hover:bg-red-500"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="hidden md:inline">Logout</span>
