@@ -26,15 +26,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Server Operations Center"
+args = "Tactical Command Center"
 
 [[workflows.workflow]]
-name = "Server Operations Center"
+name = "Tactical Command Center"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd \"Rust Server Operations Center\" && npm run dev"
+args = "cd \"Rust Tactical Command Center\" && npm run dev"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
