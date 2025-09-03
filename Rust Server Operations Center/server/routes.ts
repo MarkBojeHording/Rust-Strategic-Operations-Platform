@@ -318,8 +318,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get player profiles for a server (new profile-based system) - PROTECTED
-  app.get("/api/servers/:serverId/profiles", isAuthenticated, async (req, res) => {
+  // Get player profiles for a server (new profile-based system)
+  app.get("/api/servers/:serverId/profiles", async (req, res) => {
     try {
       const { serverId } = req.params;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 500;
