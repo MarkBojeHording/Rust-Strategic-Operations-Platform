@@ -60,8 +60,13 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
+  // Generate username from email if not provided
+  const email = claims["email"];
+  const username = email ? email.split('@')[0] : `user_${claims["sub"].slice(-8)}`;
+  
   await storage.upsertUser({
     id: claims["sub"],
+    username: username,
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
