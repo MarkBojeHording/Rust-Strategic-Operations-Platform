@@ -1,0 +1,29 @@
+Source: https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/src/components/server-overview.tsx?t=1756874136488 Line: 170 Column: 38
+The above error occurred in the <ServerOverview> component:
+
+    at ServerOverview (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/src/components/server-overview.tsx?t=1756874136488:23:34)
+    at div
+    at main
+    at div
+    at Dashboard (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/src/pages/dashboard.tsx:30:22)
+    at Route (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/wouter.js?v=ff626e54:323:16)
+    at Switch (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/wouter.js?v=ff626e54:379:17)
+    at Router (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/src/App.tsx?v=E2h250Kn1L6DsauDqpm-D:32:42)
+    at Provider (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=ff626e54:38:15)
+    at TooltipProvider (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=ff626e54:2216:5)
+    at QueryClientProvider (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/@tanstack_react-query.js?v=ff626e54:2805:3)
+    at ErrorBoundary (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/src/components/error-boundary.tsx:20:5)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+ErrorBoundary caught an error: 
+ReferenceError {}
+ 
+Object {componentStack: "↵    at ServerOverview…"}
+
+[vite] hot updated: /src/components/server-overview.tsx
+[vite] hot updated: /src/index.css?v=E2h250Kn1L6DsauDqpm-D
+[vite] hot updated: /src/components/server-overview.tsx
+[vite] hot updated: /src/index.css?v=E2h250Kn1L6DsauDqpm-D
+[vite] hot updated: /src/components/server-overview.tsx
+[vite] hot updated: /src/index.css?v=E2h250Kn1L6DsauDqpm-D
