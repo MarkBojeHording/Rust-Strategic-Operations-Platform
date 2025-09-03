@@ -115,7 +115,7 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
             <div className="flex items-start justify-between mb-4">
               <div>
                 <div className="flex items-center space-x-3 mb-2">
-                  <h2 className="text-xl font-semibold text-white" data-testid="text-server-name">
+                  <h2 className="text-xl font-semibold text-gray-900" data-testid="text-server-name">
                     {server.name}
                   </h2>
                   {/* Server Status Indicator */}
@@ -136,12 +136,12 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
                     </span>
                   )}
                 </div>
-                <div className="flex items-center space-x-4 text-sm text-gray-400 mb-2">
+                <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
                   <span data-testid="text-server-region">{server.region}</span>
                   <span>•</span>
                   <span data-testid="text-server-game">{server.game}</span>
                   <span>•</span>
-                  <span className={server.status === 'online' ? "text-white font-medium" : "text-red-400 font-medium"}>
+                  <span className={server.status === 'online' ? "text-gray-900 font-medium" : "text-red-400 font-medium"}>
                     <span data-testid="text-current-players">{server.players}</span> / 
                     <span data-testid="text-max-players">{server.maxPlayers}</span> players
                     {/* Premium Players Indicator */}
@@ -164,13 +164,13 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
                 )}
                 
                 {/* Connection & Queue Information */}
-                <div className="bg-gray-800/30 rounded-lg p-3 text-sm space-y-2 mb-3">
+                <div className="bg-gray-200 rounded-lg p-3 text-sm space-y-2 mb-3">
                   {/* Connection Status */}
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Connection</span>
+                    <span className="text-gray-700">Connection</span>
                     <div className="flex items-center gap-1">
-                      <Clock size={12} className="text-gray-500" />
-                      <span className="text-gray-500 text-xs">
+                      <Clock size={12} className="text-gray-600" />
+                      <span className="text-gray-700 text-xs">
                         Ping: {server.ping ? `${server.ping}ms` : '--'}
                       </span>
                     </div>
@@ -187,9 +187,9 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
                   )}
 
                   {/* Queue Status */}
-                  <div className="border-t border-gray-700 pt-2">
+                  <div className="border-t border-gray-400 pt-2">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-gray-400">Queue Status</span>
+                      <span className="text-gray-700">Queue Status</span>
                       {server.players >= server.maxPlayers ? (
                         <span className="text-orange-400 text-xs">Server Full</span>
                       ) : (
@@ -201,7 +201,7 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
                         Queue: {server.queueCount || 0} players waiting
                       </div>
                     ) : (
-                      <div className="text-gray-400 text-xs">
+                      <div className="text-gray-700 text-xs">
                         {server.maxPlayers - server.players} slots available
                       </div>
                     )}
@@ -209,7 +209,7 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
 
                   {/* Error States */}
                   {(server.status !== 'online' || server.errorMessage) && (
-                    <div className="border-t border-gray-700 pt-2">
+                    <div className="border-t border-gray-400 pt-2">
                       <div className="flex items-center gap-2 text-red-400 text-xs">
                         <AlertTriangle size={12} />
                         <span>
@@ -222,7 +222,7 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
                 {(server.mapInfo || server.gameMode || server.lastWipe) && (
                   <div className="space-y-2">
                     {/* Game Mode and Wipe Info */}
-                    <div className="flex items-center space-x-4 text-sm text-gray-400">
+                    <div className="flex items-center space-x-4 text-sm text-gray-600">
                       {server.gameMode && (
                         <span data-testid="text-server-gamemode" className="text-purple-400">{server.gameMode}</span>
                       )}
@@ -238,19 +238,19 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
                     
                     {/* Detailed Map Information */}
                     {server.mapInfo && (
-                      <div className="bg-gray-800/50 rounded-lg p-3">
-                        <h4 className="text-sm font-medium text-blue-400 mb-2">Map Information</h4>
+                      <div className="bg-gray-200 rounded-lg p-3">
+                        <h4 className="text-sm font-medium text-blue-600 mb-2">Map Information</h4>
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           {server.mapInfo.seed && (
                             <div>
-                              <span className="text-gray-400">Seed:</span>
-                              <span className="ml-2 text-white font-mono" data-testid="text-map-seed">{server.mapInfo.seed}</span>
+                              <span className="text-gray-600">Seed:</span>
+                              <span className="ml-2 text-gray-900 font-mono" data-testid="text-map-seed">{server.mapInfo.seed}</span>
                             </div>
                           )}
                           {server.mapInfo.size && (
                             <div>
-                              <span className="text-gray-400">Size:</span>
-                              <span className="ml-2 text-white" data-testid="text-map-size">{server.mapInfo.size}</span>
+                              <span className="text-gray-600">Size:</span>
+                              <span className="ml-2 text-gray-900" data-testid="text-map-size">{server.mapInfo.size}</span>
                             </div>
                           )}
                           <div>
@@ -259,14 +259,14 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
                           </div>
                           {server.mapInfo.entityCount && (
                             <div>
-                              <span className="text-gray-400">Entity Count:</span>
-                              <span className="ml-2 text-white" data-testid="text-map-entities">{server.mapInfo.entityCount.toLocaleString()}</span>
+                              <span className="text-gray-600">Entity Count:</span>
+                              <span className="ml-2 text-gray-900" data-testid="text-map-entities">{server.mapInfo.entityCount.toLocaleString()}</span>
                             </div>
                           )}
                           {server.mapInfo.monuments && (
                             <div>
-                              <span className="text-gray-400">Monuments:</span>
-                              <span className="ml-2 text-white" data-testid="text-map-monuments">{server.mapInfo.monuments}</span>
+                              <span className="text-gray-600">Monuments:</span>
+                              <span className="ml-2 text-gray-900" data-testid="text-map-monuments">{server.mapInfo.monuments}</span>
                             </div>
                           )}
                         </div>
