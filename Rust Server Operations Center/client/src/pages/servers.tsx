@@ -90,7 +90,7 @@ export default function ServersPage() {
       source
     };
     setErrorMessages(prev => [newError, ...prev].slice(0, 50)); // Keep only last 50 errors
-  }, []);
+  }, []); // Remove all dependencies to prevent re-render cycles
 
   const clearErrorMessages = () => {
     setErrorMessages([]);
@@ -128,7 +128,7 @@ export default function ServersPage() {
       const errorMsg = usersError instanceof Error ? usersError.message : 'Failed to fetch users';
       addErrorMessage(errorMsg, 'Users Query');
     }
-  }, [usersError, usersLoading, addErrorMessage]);
+  }, [usersError?.message, usersLoading]); // Only depend on error message, not function
 
   // Fetch teams
   const { data: teams = [], isLoading: teamsLoading, error: teamsError } = useQuery({
@@ -146,7 +146,7 @@ export default function ServersPage() {
       const errorMsg = teamsError instanceof Error ? teamsError.message : 'Failed to fetch teams';
       addErrorMessage(errorMsg, 'Teams Query');
     }
-  }, [teamsError, teamsLoading, addErrorMessage]);
+  }, [teamsError?.message, teamsLoading]); // Only depend on error message, not function
 
   // User form
   const userForm = useForm<z.infer<typeof createUserSchema>>({
@@ -310,15 +310,17 @@ export default function ServersPage() {
     refetchOnWindowFocus: true,
     retry: (failureCount, error) => {
       console.log(`Servers query retry attempt ${failureCount}:`, error);
-      return failureCount < 2; // Only retry twice
+      return failureCount < 1; // Reduce retries to prevent error cascades
     },
   }) as { data: ServerPreview[], isLoading: boolean, error: Error | null };
 
-  // Handle servers error
-  if (serversError && !isLoading) {
-    const errorMsg = serversError instanceof Error ? serversError.message : 'Failed to fetch servers';
-    addErrorMessage(errorMsg, 'Server Query');
-  }
+  // Handle servers error - moved to useEffect to prevent render-time state updates
+  useEffect(() => {
+    if (serversError && !isLoading) {
+      const errorMsg = serversError instanceof Error ? serversError.message : 'Failed to fetch servers';
+      addErrorMessage(errorMsg, 'Server Query');
+    }
+  }, [serversError?.message, isLoading]);
 
   // Fetch database metrics
   const { data: dbMetrics, isLoading: dbMetricsLoading, error: dbMetricsError } = useQuery({
@@ -340,15 +342,17 @@ export default function ServersPage() {
     refetchInterval: 30000, // Refresh every 30 seconds
     retry: (failureCount, error) => {
       console.log(`Database metrics query retry attempt ${failureCount}:`, error);
-      return failureCount < 2; // Only retry twice
+      return failureCount < 1; // Reduce retries to prevent error cascades
     },
   });
 
-  // Handle database metrics error
-  if (dbMetricsError && !dbMetricsLoading) {
-    const errorMsg = dbMetricsError instanceof Error ? dbMetricsError.message : 'Failed to fetch database metrics';
-    addErrorMessage(errorMsg, 'Database Metrics');
-  }
+  // Handle database metrics error - moved to useEffect to prevent render-time state updates
+  useEffect(() => {
+    if (dbMetricsError && !dbMetricsLoading) {
+      const errorMsg = dbMetricsError instanceof Error ? dbMetricsError.message : 'Failed to fetch database metrics';
+      addErrorMessage(errorMsg, 'Database Metrics');
+    }
+  }, [dbMetricsError?.message, dbMetricsLoading]);
 
   // Add server mutation
   const addServerMutation = useMutation({
