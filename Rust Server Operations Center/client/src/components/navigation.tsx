@@ -19,10 +19,6 @@ export function Navigation() {
     window.location.href = '/api/logout';
   };
 
-  // Don't show navigation on landing page unless authenticated
-  if (location === '/landing' && !isAuthenticated) {
-    return null;
-  }
 
   const navItems = [
     {
