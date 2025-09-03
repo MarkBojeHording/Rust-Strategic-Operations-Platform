@@ -128,7 +128,7 @@ export default function ServersPage() {
       const errorMsg = usersError instanceof Error ? usersError.message : 'Failed to fetch users';
       addErrorMessage(errorMsg, 'Users Query');
     }
-  }, [usersError, usersLoading]);
+  }, [usersError, usersLoading, addErrorMessage]);
 
   // Fetch teams
   const { data: teams = [], isLoading: teamsLoading, error: teamsError } = useQuery({
@@ -146,7 +146,7 @@ export default function ServersPage() {
       const errorMsg = teamsError instanceof Error ? teamsError.message : 'Failed to fetch teams';
       addErrorMessage(errorMsg, 'Teams Query');
     }
-  }, [teamsError, teamsLoading]);
+  }, [teamsError, teamsLoading, addErrorMessage]);
 
   // User form
   const userForm = useForm<z.infer<typeof createUserSchema>>({
