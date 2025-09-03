@@ -83,7 +83,7 @@ export default function ServersPage() {
 
   const addErrorMessage = useCallback((message: string, source: string, type: 'error' | 'warning' = 'error') => {
     const newError: ErrorMessage = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique keys
       message,
       type,
       timestamp: new Date(),
