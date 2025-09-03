@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "@/components/error-boundary";
+import { Navigation } from "@/components/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
 import ServersPage from "@/pages/servers";
@@ -23,14 +24,19 @@ function Router() {
   }
 
   return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/servers" component={ServersPage} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/map-viewer" component={MapViewer} />
-      <Route path="/landing" component={Landing} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <div className="min-h-[calc(100vh-4rem)]">
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/servers" component={ServersPage} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/map-viewer" component={MapViewer} />
+          <Route path="/landing" component={Landing} />
+          <Route component={NotFound} />
+        </Switch>
+      </div>
+    </div>
   );
 }
 
