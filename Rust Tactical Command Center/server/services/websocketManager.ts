@@ -1,14 +1,21 @@
 import WebSocket from 'ws';
-import { playerActivityTracker } from './playerActivityTracker';
+import { PlayerActivityTracker } from './playerActivityTracker.js';
 
 export class WebSocketManager {
   private ws: WebSocket | null = null;
   private reconnectInterval: NodeJS.Timeout | null = null;
   private subscribedServers: Set<string> = new Set();
-  private processedEvents: Set<string> = new Set();
+  private playerActivityTracker: PlayerActivityTracker;
+  private processedEvents: Set<string> = new Set(); // Track processed events to prevent duplicates
 
-  connect(): void {
+  constructor() {
+    this.playerActivityTracker = new PlayerActivityTracker();
+  }
+
+  async connect(): Promise<void> {
     try {
+      console.log('Connecting to BattleMetrics WebSocket for persistent tracking...');
+      
       this.ws = new WebSocket('wss://ws.battlemetrics.com/cable', {
         headers: {
           'Origin': 'https://battlemetrics.com',
@@ -17,9 +24,10 @@ export class WebSocketManager {
       });
 
       this.ws.on('open', () => {
-        console.log('✓ Connected to BattleMetrics WebSocket');
-
-        // Re-subscribe to all previously subscribed servers
+        console.log('✓ Connected to BattleMetrics WebSocket (persistent)');
+        this.scheduleHeartbeat();
+        
+        // Re-subscribe to all servers that were previously subscribed
         this.subscribedServers.forEach(serverId => {
           this.subscribeToServer(serverId);
         });
@@ -34,8 +42,8 @@ export class WebSocketManager {
         }
       });
 
-      this.ws.on('close', () => {
-        console.log('WebSocket connection closed, attempting to reconnect in 5 seconds...');
+      this.ws.on('close', (code, reason) => {
+        console.log(`WebSocket disconnected: ${code} - ${reason}`);
         this.scheduleReconnect();
       });
 
@@ -50,6 +58,17 @@ export class WebSocketManager {
     }
   }
 
+  private scheduleHeartbeat(): void {
+    // Send periodic pings to keep connection alive
+    const heartbeat = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.ping();
+      } else {
+        clearInterval(heartbeat);
+      }
+    }, 30000); // Every 30 seconds
+  }
+
   private scheduleReconnect(): void {
     if (this.reconnectInterval) {
       clearTimeout(this.reconnectInterval);
@@ -58,75 +77,109 @@ export class WebSocketManager {
     this.reconnectInterval = setTimeout(() => {
       console.log('Attempting to reconnect to BattleMetrics WebSocket...');
       this.connect();
-    }, 5000);
+    }, 5000); // Reconnect after 5 seconds
   }
 
   subscribeToServer(serverId: string): void {
+    this.subscribedServers.add(serverId);
+    
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const subscribeMessage = {
-        type: 'subscribe',
-        channels: [`server:${serverId}`]
+        command: 'subscribe',
+        identifier: JSON.stringify({
+          channel: 'ServerEventsChannel',
+          id: serverId
+        })
       };
 
+      console.log(`Subscribing to server events for server ${serverId} (persistent)`);
       this.ws.send(JSON.stringify(subscribeMessage));
-      this.subscribedServers.add(serverId);
-      playerActivityTracker.setActiveServer(serverId);
-      console.log(`📡 Subscribed to server ${serverId} for player tracking`);
-    } else {
-      console.warn('WebSocket not connected, cannot subscribe to server');
     }
   }
 
   unsubscribeFromServer(serverId: string): void {
+    this.subscribedServers.delete(serverId);
+    
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const unsubscribeMessage = {
-        type: 'unsubscribe',
-        channels: [`server:${serverId}`]
+        command: 'unsubscribe',
+        identifier: JSON.stringify({
+          channel: 'ServerEventsChannel',
+          id: serverId
+        })
       };
 
+      console.log(`Unsubscribing from server events for server ${serverId}`);
       this.ws.send(JSON.stringify(unsubscribeMessage));
-      this.subscribedServers.delete(serverId);
-      console.log(`Unsubscribed from server ${serverId}`);
     }
   }
 
   private async handleMessage(message: any): Promise<void> {
     try {
-      if (message.type === 'player_activity') {
-        const { player, server, action, timestamp } = message.data;
-
-        // Create unique event ID to prevent duplicate processing
-        const eventId = `${server.id}_${player.id}_${action}_${timestamp}`;
-
-        if (this.processedEvents.has(eventId)) {
-          return; // Skip duplicate event
+      if (message.type === 'ping') {
+        // Respond to ping
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify({ type: 'pong' }));
         }
+        return;
+      }
 
+      if (message.type === 'welcome') {
+        console.log('WebSocket welcomed - ready for subscriptions');
+        return;
+      }
+
+      if (message.type === 'confirm_subscription') {
+        console.log('Subscription confirmed for channel:', message.identifier);
+        return;
+      }
+
+      // Handle server events
+      if (message.message && message.message.type === 'SERVER_EVENT') {
+        const event = message.message;
+        const eventId = `${event.serverId}-${event.timestamp}-${event.playerId}-${event.type}`;
+        
+        // Check for duplicate events
+        if (this.processedEvents.has(eventId)) {
+          return; // Skip duplicate
+        }
         this.processedEvents.add(eventId);
-
+        
         // Clean up old processed events (keep only last 1000)
         if (this.processedEvents.size > 1000) {
           const eventsArray = Array.from(this.processedEvents);
-          this.processedEvents = new Set(eventsArray.slice(-1000));
+          eventsArray.slice(0, 500).forEach(id => this.processedEvents.delete(id));
         }
 
-        if (action === 'joined') {
-          await playerActivityTracker.handlePlayerJoin(player.name, player.id, server.id);
-        } else if (action === 'left') {
-          await playerActivityTracker.handlePlayerLeave(player.name, player.id, server.id);
-        }
+        await this.handleServerEvent(event);
       }
+
     } catch (error) {
       console.error('Error handling WebSocket message:', error);
     }
   }
 
-  getSubscribedServers(): string[] {
-    return Array.from(this.subscribedServers);
-  }
+  private async handleServerEvent(event: any): Promise<void> {
+    try {
+      const { type, serverId, playerId, name: playerName, timestamp } = event;
 
-  isConnected(): boolean {
-    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+      // Validate player data before processing
+      if (!playerName || typeof playerName !== 'string') {
+        console.warn(`⚠️ [WebSocket] Invalid player name for event: ${JSON.stringify({ type, serverId, playerId, playerName })}`);
+        return; // Skip events with invalid player names
+      }
+
+      if (type === 'addPlayer') {
+        await this.playerActivityTracker.recordPlayerJoin(serverId, playerName, playerId);
+        console.log(`[Persistent] Player ${playerName} joined server ${serverId}`);
+      } else if (type === 'removePlayer') {
+        await this.playerActivityTracker.recordPlayerLeave(serverId, playerName, playerId);
+        console.log(`[Persistent] Player ${playerName} left server ${serverId}`);
+      }
+
+    } catch (error) {
+      console.error('Error processing server event:', error);
+    }
   }
 
   disconnect(): void {
@@ -140,7 +193,21 @@ export class WebSocketManager {
       this.ws = null;
     }
 
-    console.log('WebSocket disconnected');
+    this.subscribedServers.clear();
+    console.log('WebSocket disconnected and cleaned up');
+  }
+
+  getSubscribedServers(): string[] {
+    return Array.from(this.subscribedServers);
+  }
+
+  isConnected(): boolean {
+    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+  }
+
+  // Provide access to the player activity tracker for external use
+  getPlayerActivityTracker(): PlayerActivityTracker {
+    return this.playerActivityTracker;
   }
 }
 

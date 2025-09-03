@@ -994,6 +994,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =========================================
+  // TEAM-SCOPED SERVER & PLAYER INTELLIGENCE API ENDPOINTS
+  // =========================================
+
+  // Get team's tracked servers
+  app.get('/api/teams/servers/:teamId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      const servers = await storage.getTeamTrackedServers(teamId);
+      res.json(servers);
+    } catch (error) {
+      console.error("Error fetching team servers:", error);
+      res.status(500).json({ message: "Failed to fetch team servers" });
+    }
+  });
+
+  // Get team's active server
+  app.get('/api/teams/active-server/:teamId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      const activeServer = await storage.getTeamActiveServer(teamId);
+      res.json(activeServer);
+    } catch (error) {
+      console.error("Error fetching team active server:", error);
+      res.status(500).json({ message: "Failed to fetch team active server" });
+    }
+  });
+
+  // Set team's active server and start tracking
+  app.post('/api/teams/:teamId/select-server', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      const { serverId } = req.body;
+      const userId = req.user.claims.sub;
+
+      // Set team's selected server
+      await storage.setTeamActiveServer(teamId, serverId, userId);
+      
+      // Start WebSocket tracking for this server
+      if (webSocketManager.isConnected()) {
+        webSocketManager.subscribeToServer(serverId);
+        console.log(`🎯 Team ${teamId} now tracking server ${serverId}`);
+      }
+
+      res.json({ success: true, message: `Server ${serverId} selected for team tracking` });
+    } catch (error) {
+      console.error("Error selecting team server:", error);
+      res.status(500).json({ message: "Failed to select team server" });
+    }
+  });
+
+  // Add server to team tracking
+  app.post('/api/teams/:teamId/servers', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      const { serverId } = req.body;
+      const userId = req.user.claims.sub;
+
+      // Add server to team's tracking list
+      await storage.addServerToTeam(teamId, serverId, userId);
+      
+      // Optionally get server info from BattleMetrics
+      try {
+        const serverInfo = await battleMetricsService.getServer(serverId);
+        console.log(`📡 Added server ${serverInfo.name} to team ${teamId}`);
+      } catch (apiError) {
+        console.log(`📡 Added server ${serverId} to team ${teamId} (no BM data)`);
+      }
+
+      res.json({ success: true, message: "Server added to team tracking" });
+    } catch (error) {
+      console.error("Error adding server to team:", error);
+      res.status(500).json({ message: "Failed to add server to team" });
+    }
+  });
+
+  // Get team's player intelligence data
+  app.get('/api/teams/players/:teamId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      const playerData = await storage.getTeamPlayerIntelligence(teamId);
+      res.json(playerData);
+    } catch (error) {
+      console.error("Error fetching team player data:", error);
+      res.status(500).json({ message: "Failed to fetch team player data" });
+    }
+  });
+
+  // Update team player intelligence
+  app.post('/api/teams/:teamId/player-intelligence', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      const { playerName, aliases, notes, threatLevel, relationship } = req.body;
+      const userId = req.user.claims.sub;
+
+      const updatedPlayer = await storage.updateTeamPlayerIntelligence({
+        teamId,
+        playerName,
+        aliases: aliases || '',
+        notes: notes || '',
+        threatLevel: threatLevel || 'unknown',
+        relationship: relationship || 'unknown',
+        updatedBy: userId,
+      });
+
+      res.json(updatedPlayer);
+    } catch (error) {
+      console.error("Error updating team player intelligence:", error);
+      res.status(500).json({ message: "Failed to update player intelligence" });
+    }
+  });
+
+  // Get team's player profiles for selected server
+  app.get('/api/teams/:teamId/server-players', isAuthenticated, async (req: any, res) => {
+    try {
+      const { teamId } = req.params;
+      
+      // Get team's active server
+      const activeServer = await storage.getTeamActiveServer(teamId);
+      if (!activeServer) {
+        return res.json([]);
+      }
+
+      // Get player profiles for that server using the tracker
+      const tracker = webSocketManager.getPlayerActivityTracker();
+      const serverPlayers = await tracker.getPlayerProfiles(activeServer.id);
+      
+      // Merge with team intelligence data
+      const teamIntelligence = await storage.getTeamPlayerIntelligence(teamId);
+      const intelligenceMap = new Map(teamIntelligence.map(intel => [intel.playerName, intel]));
+
+      const enrichedPlayers = serverPlayers.map(player => ({
+        ...player,
+        teamIntelligence: intelligenceMap.get(player.playerName) || null
+      }));
+
+      res.json(enrichedPlayers);
+    } catch (error) {
+      console.error("Error fetching team server players:", error);
+      res.status(500).json({ message: "Failed to fetch team server players" });
+    }
+  });
+
   // BattleMetrics Admin Routes
   
   // Get available servers from BattleMetrics API

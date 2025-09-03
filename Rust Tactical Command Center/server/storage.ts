@@ -29,6 +29,8 @@ import {
   teamMembers,
   battlemetricsServers, // Ensure battlemetricsServers is imported
   playerSessions, // Ensure playerSessions is imported
+  teamServerTracking, // Team server tracking table
+  teamPlayerIntelligence, // Team player intelligence table
 } from "@shared/schema";
 
 // Utility function to generate consistent alphanumeric report IDs
@@ -574,6 +576,224 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error ending player session:", error);
       return false;
+    }
+  }
+
+  // =========================================
+  // TEAM-SCOPED SERVER & PLAYER INTELLIGENCE METHODS
+  // =========================================
+
+  // Team server tracking methods
+  async getTeamTrackedServers(teamId: string) {
+    try {
+      const servers = await this.db.select({
+        server: battlemetricsServers,
+        tracking: teamServerTracking,
+      })
+        .from(teamServerTracking)
+        .innerJoin(battlemetricsServers, eq(teamServerTracking.serverId, battlemetricsServers.id))
+        .where(and(
+          eq(teamServerTracking.teamId, teamId),
+          eq(teamServerTracking.isActive, true)
+        ))
+        .orderBy(desc(teamServerTracking.addedAt));
+
+      return servers.map(item => ({
+        ...item.server,
+        addedAt: item.tracking.addedAt,
+        addedBy: item.tracking.addedBy,
+      }));
+    } catch (error) {
+      console.error("Error getting team tracked servers:", error);
+      return [];
+    }
+  }
+
+  async getTeamActiveServer(teamId: string) {
+    try {
+      const [team] = await this.db.select({
+        selectedServerId: teams.selectedServerId,
+      })
+        .from(teams)
+        .where(eq(teams.id, teamId))
+        .limit(1);
+
+      if (!team?.selectedServerId) {
+        return null;
+      }
+
+      const [server] = await this.db.select()
+        .from(battlemetricsServers)
+        .where(eq(battlemetricsServers.id, team.selectedServerId))
+        .limit(1);
+
+      return server || null;
+    } catch (error) {
+      console.error("Error getting team active server:", error);
+      return null;
+    }
+  }
+
+  async setTeamActiveServer(teamId: string, serverId: string, userId: string) {
+    try {
+      // Update team's selected server
+      await this.db.update(teams)
+        .set({ 
+          selectedServerId: serverId, 
+          updatedAt: new Date() 
+        })
+        .where(eq(teams.id, teamId));
+
+      // Ensure server is in the team's tracking list
+      await this.addServerToTeam(teamId, serverId, userId);
+
+      return true;
+    } catch (error) {
+      console.error("Error setting team active server:", error);
+      throw error;
+    }
+  }
+
+  async addServerToTeam(teamId: string, serverId: string, userId: string) {
+    try {
+      // Check if server already exists in battlemetrics_servers
+      const [existingServer] = await this.db.select()
+        .from(battlemetricsServers)
+        .where(eq(battlemetricsServers.id, serverId))
+        .limit(1);
+
+      if (!existingServer) {
+        // Try to fetch server info from BattleMetrics and add it
+        try {
+          const serverInfo = await battleMetricsService.getServer(serverId);
+          await this.db.insert(battlemetricsServers).values({
+            id: serverId,
+            name: serverInfo.name || `Server ${serverId}`,
+            game: serverInfo.game || 'rust',
+            region: serverInfo.region || null,
+            isActive: true,
+            addedAt: new Date(),
+          });
+        } catch (apiError) {
+          // Add server with minimal info if BattleMetrics fails
+          await this.db.insert(battlemetricsServers).values({
+            id: serverId,
+            name: `Server ${serverId}`,
+            game: 'rust',
+            region: null,
+            isActive: true,
+            addedAt: new Date(),
+          });
+        }
+      }
+
+      // Check if already tracking this server for this team
+      const [existingTracking] = await this.db.select()
+        .from(teamServerTracking)
+        .where(and(
+          eq(teamServerTracking.teamId, teamId),
+          eq(teamServerTracking.serverId, serverId)
+        ))
+        .limit(1);
+
+      if (!existingTracking) {
+        // Add to team's server tracking
+        await this.db.insert(teamServerTracking).values({
+          teamId,
+          serverId,
+          isActive: true,
+          addedBy: userId,
+          addedAt: new Date(),
+        });
+      } else if (!existingTracking.isActive) {
+        // Reactivate tracking if it was disabled
+        await this.db.update(teamServerTracking)
+          .set({ 
+            isActive: true,
+            addedAt: new Date(),
+            addedBy: userId 
+          })
+          .where(eq(teamServerTracking.id, existingTracking.id));
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error adding server to team:", error);
+      throw error;
+    }
+  }
+
+  // Team player intelligence methods
+  async getTeamPlayerIntelligence(teamId: string) {
+    try {
+      const intelligence = await this.db.select()
+        .from(teamPlayerIntelligence)
+        .where(eq(teamPlayerIntelligence.teamId, teamId))
+        .orderBy(desc(teamPlayerIntelligence.lastUpdated));
+
+      return intelligence;
+    } catch (error) {
+      console.error("Error getting team player intelligence:", error);
+      return [];
+    }
+  }
+
+  async updateTeamPlayerIntelligence(playerData: {
+    teamId: string;
+    playerName: string;
+    aliases?: string;
+    notes?: string;
+    threatLevel?: string;
+    relationship?: string;
+    updatedBy?: string;
+  }) {
+    try {
+      // Check if intelligence record already exists
+      const [existing] = await this.db.select()
+        .from(teamPlayerIntelligence)
+        .where(and(
+          eq(teamPlayerIntelligence.teamId, playerData.teamId),
+          eq(teamPlayerIntelligence.playerName, playerData.playerName)
+        ))
+        .limit(1);
+
+      if (existing) {
+        // Update existing record
+        const [updated] = await this.db.update(teamPlayerIntelligence)
+          .set({
+            aliases: playerData.aliases || existing.aliases,
+            notes: playerData.notes || existing.notes,
+            threat_level: playerData.threatLevel || existing.threat_level,
+            relationship: playerData.relationship || existing.relationship,
+            lastUpdated: new Date(),
+            updatedBy: playerData.updatedBy || existing.updatedBy,
+          })
+          .where(eq(teamPlayerIntelligence.id, existing.id))
+          .returning();
+
+        return updated;
+      } else {
+        // Create new intelligence record
+        const [created] = await this.db.insert(teamPlayerIntelligence)
+          .values({
+            teamId: playerData.teamId,
+            playerName: playerData.playerName,
+            aliases: playerData.aliases || '',
+            notes: playerData.notes || '',
+            threat_level: playerData.threatLevel || 'unknown',
+            relationship: playerData.relationship || 'unknown',
+            updatedBy: playerData.updatedBy,
+            firstSeenByTeam: new Date(),
+            lastUpdated: new Date(),
+            createdAt: new Date(),
+          })
+          .returning();
+
+        return created;
+      }
+    } catch (error) {
+      console.error("Error updating team player intelligence:", error);
+      throw error;
     }
   }
 }

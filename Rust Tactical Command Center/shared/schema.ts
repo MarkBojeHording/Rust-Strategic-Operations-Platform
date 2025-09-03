@@ -152,11 +152,55 @@ export const teams = pgTable("teams", {
   color: text("color").notNull(), // Hex color for team identification
   mainBaseId: text("main_base_id"), // ID of the main base for this team
   notes: text("notes").default(""),
+  selectedServerId: text("selected_server_id").references(() => battlemetricsServers.id), // Team's selected server
   isActive: boolean("is_active").default(true).notNull(),
   createdBy: varchar("created_by").notNull().references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Team Server Tracking - which servers each team is monitoring
+export const teamServerTracking = pgTable("team_server_tracking", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  teamId: varchar("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+  serverId: text("server_id").notNull().references(() => battlemetricsServers.id, { onDelete: "cascade" }),
+  isActive: boolean("is_active").default(true).notNull(),
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+  addedBy: varchar("added_by").notNull().references(() => users.id),
+}, (table) => ({
+  teamServerIdx: index("team_server_idx").on(table.teamId, table.serverId),
+  teamActiveServersIdx: index("team_active_servers_idx").on(table.teamId, table.isActive),
+}));
+
+// Team Player Intelligence - team-specific player data (notes, aliases, associations)
+export const teamPlayerIntelligence = pgTable("team_player_intelligence", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  teamId: varchar("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+  playerProfileId: text("player_profile_id").notNull().references(() => playerProfiles.id, { onDelete: "cascade" }),
+  playerName: text("player_name").notNull(), // Denormalized for quick access
+  battlemetricsId: text("battlemetrics_id"), // BattleMetrics ID for tracking name changes
+  
+  // Team-specific intelligence
+  aliases: text("aliases").default(""), // Team's recorded aliases for this player
+  notes: text("notes").default(""), // Team-specific notes about this player
+  threat_level: text("threat_level").default("unknown"), // unknown, low, medium, high, critical
+  relationship: text("relationship").default("unknown"), // ally, enemy, neutral, unknown
+  
+  // Base associations (team-specific)
+  associatedBases: text("associated_bases").default(""), // Comma-separated base IDs
+  
+  // Metadata
+  firstSeenByTeam: timestamp("first_seen_by_team").defaultNow().notNull(),
+  lastUpdated: timestamp("last_updated").defaultNow().notNull(),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  teamPlayerIdx: index("team_player_idx").on(table.teamId, table.playerProfileId),
+  teamPlayerNameIdx: index("team_player_name_idx").on(table.teamId, table.playerName),
+  battlemetricsTeamIdx: index("battlemetrics_team_idx").on(table.battlemetricsId, table.teamId),
+  threatLevelIdx: index("threat_level_idx").on(table.teamId, table.threat_level),
+  relationshipIdx: index("relationship_idx").on(table.teamId, table.relationship),
+}));
 
 // BattleMetrics servers table for tracking monitored servers
 export const battlemetricsServers = pgTable("battlemetrics_servers", {
@@ -278,6 +322,7 @@ export const playerProfilesRelations = relations(playerProfiles, ({ one, many })
   }),
   sessions: many(playerSessions),
   activities: many(playerActivities),
+  teamIntelligence: many(teamPlayerIntelligence),
 }));
 
 export const playerSessionsRelations = relations(playerSessions, ({ one }) => ({
@@ -317,7 +362,13 @@ export const teamsRelations = relations(teams, ({ one, many }) => ({
     fields: [teams.createdBy],
     references: [users.id],
   }),
+  selectedServer: one(battlemetricsServers, {
+    fields: [teams.selectedServerId],
+    references: [battlemetricsServers.id],
+  }),
   members: many(teamMembers),
+  serverTracking: many(teamServerTracking),
+  playerIntelligence: many(teamPlayerIntelligence),
 }));
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
@@ -331,6 +382,36 @@ export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
   }),
 }));
 
+export const teamServerTrackingRelations = relations(teamServerTracking, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamServerTracking.teamId],
+    references: [teams.id],
+  }),
+  server: one(battlemetricsServers, {
+    fields: [teamServerTracking.serverId],
+    references: [battlemetricsServers.id],
+  }),
+  addedBy: one(users, {
+    fields: [teamServerTracking.addedBy],
+    references: [users.id],
+  }),
+}));
+
+export const teamPlayerIntelligenceRelations = relations(teamPlayerIntelligence, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamPlayerIntelligence.teamId],
+    references: [teams.id],
+  }),
+  playerProfile: one(playerProfiles, {
+    fields: [teamPlayerIntelligence.playerProfileId],
+    references: [playerProfiles.id],
+  }),
+  updatedBy: one(users, {
+    fields: [teamPlayerIntelligence.updatedBy],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertTeamSchema = createInsertSchema(teams).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertBattlemetricsServerSchema = createInsertSchema(battlemetricsServers);
@@ -338,6 +419,8 @@ export const insertPlayerProfileSchema = createInsertSchema(playerProfiles);
 export const insertPlayerSessionSchema = createInsertSchema(playerSessions);
 export const insertPlayerActivitySchema = createInsertSchema(playerActivities);
 export const insertTeammateSchema = createInsertSchema(teammates).omit({ id: true, createdAt: true });
+export const insertTeamServerTrackingSchema = createInsertSchema(teamServerTracking).omit({ id: true, addedAt: true });
+export const insertTeamPlayerIntelligenceSchema = createInsertSchema(teamPlayerIntelligence).omit({ id: true, createdAt: true, firstSeenByTeam: true, lastUpdated: true });
 
 // Team management schemas
 export const createTeamSchema = z.object({
@@ -368,10 +451,14 @@ export type BattlemetricsServer = typeof battlemetricsServers.$inferSelect;
 export type PlayerProfile = typeof playerProfiles.$inferSelect;
 export type PlayerSession = typeof playerSessions.$inferSelect;
 export type PlayerActivity = typeof playerActivities.$inferSelect;
+export type TeamServerTracking = typeof teamServerTracking.$inferSelect;
+export type TeamPlayerIntelligence = typeof teamPlayerIntelligence.$inferSelect;
 export type InsertPlayerProfile = z.infer<typeof insertPlayerProfileSchema>;
 export type InsertPlayerSession = z.infer<typeof insertPlayerSessionSchema>;
 export type InsertPlayerActivity = z.infer<typeof insertPlayerActivitySchema>;
 export type InsertTeammate = z.infer<typeof insertTeammateSchema>;
+export type InsertTeamServerTracking = z.infer<typeof insertTeamServerTrackingSchema>;
+export type InsertTeamPlayerIntelligence = z.infer<typeof insertTeamPlayerIntelligenceSchema>;
 export type Teammate = typeof teammates.$inferSelect;
 export type CreateTeamRequest = z.infer<typeof createTeamSchema>;
 export type CreateUserRequest = z.infer<typeof createUserSchema>;

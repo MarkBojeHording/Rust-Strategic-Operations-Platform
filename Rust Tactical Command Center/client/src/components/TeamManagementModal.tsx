@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { X, Plus, ChevronLeft, ChevronRight, Search, Monitor, CheckCircle, AlertCircle } from 'lucide-react'
+import React, { useState, useRef, useEffect } from 'react'
+import { X, Plus, ChevronLeft, ChevronRight, Search, Monitor, CheckCircle, AlertCircle, Users, Server, UserCheck, AlertTriangle, Target, Settings } from 'lucide-react'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '@/lib/queryClient'
@@ -24,10 +24,12 @@ interface TeamManagementModalProps {
 }
 
 export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProps) {
+  const [selectedTeam, setSelectedTeam] = useState<string>('')
   const [selectedServer, setSelectedServer] = useState('')
   const [selectedMapOption, setSelectedMapOption] = useState('')
   const [serverSearch, setServerSearch] = useState('')
   const [showServerSearch, setShowServerSearch] = useState(false)
+  const [activeTab, setActiveTab] = useState<'servers' | 'players' | 'squads'>('servers')
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
   const [squads, setSquads] = useState<Squad[]>([
@@ -42,15 +44,33 @@ export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProp
     }
   ])
 
-  // Fetch tracked servers
-  const { data: trackedServers = [] } = useQuery({
-    queryKey: ['/api/battlemetrics/servers'],
+  // Fetch user's teams
+  const { data: userTeams = [] } = useQuery({
+    queryKey: ['/api/admin/teams'],
     enabled: isOpen
   })
 
-  // Fetch active server info
-  const { data: activeServer } = useQuery({
-    queryKey: ['/api/battlemetrics/servers/active'],
+  // Fetch team's tracked servers (team-scoped)
+  const { data: teamServers = [] } = useQuery({
+    queryKey: ['/api/teams/servers', selectedTeam],
+    enabled: isOpen && !!selectedTeam
+  })
+
+  // Fetch team's selected server info
+  const { data: teamActiveServer } = useQuery({
+    queryKey: ['/api/teams/active-server', selectedTeam],
+    enabled: isOpen && !!selectedTeam
+  })
+
+  // Fetch team's player intelligence
+  const { data: teamPlayerData = [] } = useQuery({
+    queryKey: ['/api/teams/players', selectedTeam],
+    enabled: isOpen && !!selectedTeam && activeTab === 'players'
+  })
+
+  // Fetch all available servers for search
+  const { data: allServers = [] } = useQuery({
+    queryKey: ['/api/battlemetrics/servers/all'],
     enabled: isOpen
   })
 
@@ -73,15 +93,52 @@ export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProp
     }
   })
 
-  // Select server mutation
-  const selectServerMutation = useMutation({
-    mutationFn: async (serverId: string) => {
-      return apiRequest('POST', `/api/battlemetrics/servers/${serverId}/select`)
+  // Team-specific server selection mutation
+  const selectTeamServerMutation = useMutation({
+    mutationFn: async ({ teamId, serverId }: { teamId: string; serverId: string }) => {
+      return apiRequest('POST', `/api/teams/${teamId}/select-server`, { serverId })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/battlemetrics/servers/active'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/teams/active-server', selectedTeam] })
+      queryClient.invalidateQueries({ queryKey: ['/api/teams/players', selectedTeam] })
     }
   })
+
+  // Add server to team tracking mutation
+  const addServerToTeamMutation = useMutation({
+    mutationFn: async ({ teamId, serverId }: { teamId: string; serverId: string }) => {
+      return apiRequest('POST', `/api/teams/${teamId}/servers`, { serverId })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams/servers', selectedTeam] })
+      setShowServerSearch(false)
+      setServerSearch('')
+    }
+  })
+
+  // Update team player intelligence mutation
+  const updatePlayerIntelligenceMutation = useMutation({
+    mutationFn: async (playerData: { 
+      teamId: string; 
+      playerName: string; 
+      aliases?: string; 
+      notes?: string; 
+      threatLevel?: string; 
+      relationship?: string; 
+    }) => {
+      return apiRequest('POST', `/api/teams/${playerData.teamId}/player-intelligence`, playerData)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teams/players', selectedTeam] })
+    }
+  })
+
+  // Auto-select first team if available
+  useEffect(() => {
+    if (userTeams.length > 0 && !selectedTeam) {
+      setSelectedTeam(userTeams[0].id)
+    }
+  }, [userTeams, selectedTeam])
 
   if (!isOpen) return null
 
@@ -227,7 +284,7 @@ export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProp
       >
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-orange-600/30 bg-black/30">
-          <h2 className="text-lg font-bold text-orange-400 font-mono">[TEAM MANAGEMENT]</h2>
+          <h2 className="text-lg font-bold text-orange-400 font-mono">[TACTICAL COMMAND CENTER]</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
@@ -237,10 +294,82 @@ export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProp
           </button>
         </div>
 
-        {/* Main Layout */}
-        <div className="flex flex-col h-full">
-          {/* Top Section - 50% */}
-          <div className="flex h-1/2">
+        {/* Team Selector & Navigation */}
+        <div className="flex items-center justify-between p-3 border-b border-gray-600 bg-gray-800/50">
+          {/* Team Selector */}
+          <div className="flex items-center space-x-3">
+            <Users className="h-4 w-4 text-orange-400" />
+            <select 
+              value={selectedTeam} 
+              onChange={(e) => setSelectedTeam(e.target.value)}
+              className="bg-gray-700 border border-gray-600 text-white text-sm rounded px-2 py-1 focus:border-orange-500 focus:outline-none"
+            >
+              <option value="">Select Team...</option>
+              {userTeams.map((team: any) => (
+                <option key={team.id} value={team.id}>{team.name}</option>
+              ))}
+            </select>
+            {selectedTeam && teamActiveServer && (
+              <div className="flex items-center space-x-2 text-sm">
+                <Server className="h-3 w-3 text-green-400" />
+                <span className="text-green-400">{teamActiveServer.name}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Tab Navigation */}
+          <div className="flex space-x-1">
+            <button
+              onClick={() => setActiveTab('servers')}
+              className={`px-3 py-1 text-xs rounded transition-colors ${
+                activeTab === 'servers' 
+                  ? 'bg-orange-600 text-white' 
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              <Server className="h-3 w-3 inline mr-1" />
+              Servers
+            </button>
+            <button
+              onClick={() => setActiveTab('players')}
+              className={`px-3 py-1 text-xs rounded transition-colors ${
+                activeTab === 'players' 
+                  ? 'bg-orange-600 text-white' 
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              <Target className="h-3 w-3 inline mr-1" />
+              Intel
+            </button>
+            <button
+              onClick={() => setActiveTab('squads')}
+              className={`px-3 py-1 text-xs rounded transition-colors ${
+                activeTab === 'squads' 
+                  ? 'bg-orange-600 text-white' 
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              <UserCheck className="h-3 w-3 inline mr-1" />
+              Squads
+            </button>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-hidden">
+          {!selectedTeam ? (
+            // No Team Selected State
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-gray-400">
+                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">Select a Team</h3>
+                <p className="text-sm">Choose a team from the dropdown to access tactical operations</p>
+              </div>
+            </div>
+          ) : activeTab === 'servers' ? (
+            // Server Management Tab
+            <div className="flex flex-col h-full">
+              <div className="flex h-1/2">
             {/* Server Information Section - Fixed Width */}
             <div className="w-[235px] flex-shrink-0 bg-gray-800 border-r border-gray-600 flex flex-col">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide p-2 bg-black/30 border-b border-gray-600">
@@ -765,7 +894,27 @@ export function TeamManagementModal({ isOpen, onClose }: TeamManagementModalProp
                 <span className="text-red-400 font-semibold">Admin</span> - Can make changes to Team wide settings and delete all data. Avoid giving admin roll
               </div>
             </div>
-          </div>
+            </div>
+            </div>
+          ) : activeTab === 'players' ? (
+            // Player Intelligence Tab
+            <div className="p-4">
+              <div className="text-center text-gray-400">
+                <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">Player Intelligence</h3>
+                <p className="text-sm">Team-specific player tracking and intelligence coming soon...</p>
+              </div>
+            </div>
+          ) : (
+            // Squad Management Tab (default)
+            <div className="p-4">
+              <div className="text-center text-gray-400">
+                <UserCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">Squad Management</h3>
+                <p className="text-sm">Team coordination and squad management coming soon...</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
