@@ -142,7 +142,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/servers">
-                <Button variant="outline" size="sm" className="mr-4">
+                <Button variant="secondary" size="sm" className="mr-4 bg-gray-700 hover:bg-gray-600 text-white border-gray-600">
                   <ArrowLeft size={16} className="mr-2" />
                   Back to Servers
                 </Button>
