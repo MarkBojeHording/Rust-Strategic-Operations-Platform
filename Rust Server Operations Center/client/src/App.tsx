@@ -24,7 +24,7 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={ServersPage} />
+      <Route path="/" component={Dashboard} />
       <Route path="/servers" component={ServersPage} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/map-viewer" component={MapViewer} />
