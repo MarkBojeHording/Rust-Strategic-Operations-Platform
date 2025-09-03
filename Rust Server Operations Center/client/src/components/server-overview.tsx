@@ -1,9 +1,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Progress } from '@/components/ui/progress';
 import { Server } from '@shared/schema';
-import { ExternalLink, Image, Download, X, Wifi, WifiOff, Clock, AlertTriangle, Users, Activity } from 'lucide-react';
+import { ExternalLink, Image, Download, X, Wifi, WifiOff, Clock, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
 interface ServerOverviewProps {
@@ -111,28 +110,28 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
     <>
       {/* Server Info Card */}
       <div className="lg:col-span-2">
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 rounded-xl shadow-2xl h-full hover:shadow-3xl transition-all duration-300">
-          <CardContent className="p-8">
+        <Card className="bg-surface border-gray-700 h-full">
+          <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <div className="flex items-center space-x-4 mb-4">
-                  <h2 className="text-3xl font-bold text-white leading-tight" data-testid="text-server-name">
+                <div className="flex items-center space-x-3 mb-2">
+                  <h2 className="text-xl font-semibold text-white" data-testid="text-server-name">
                     {server.name}
                   </h2>
                   {/* Server Status Indicator */}
                   {server.status === 'online' ? (
-                    <span className="flex items-center gap-2 bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-bold border border-green-500/30 shadow-lg" data-testid="status-online">
-                      <Activity size={16} className="animate-pulse" />
-                      ONLINE
+                    <span className="flex items-center gap-1 bg-green-500/20 text-green-400 px-2 py-1 rounded text-sm font-medium" data-testid="status-online">
+                      <Wifi size={12} />
+                      Online
                     </span>
                   ) : (
-                    <span className="flex items-center gap-2 bg-red-500/20 text-red-400 px-4 py-2 rounded-full text-sm font-bold border border-red-500/30 shadow-lg" data-testid="status-offline">
-                      <WifiOff size={16} />
-                      OFFLINE
+                    <span className="flex items-center gap-1 bg-red-500/20 text-red-400 px-2 py-1 rounded text-sm font-medium" data-testid="status-offline">
+                      <WifiOff size={12} />
+                      Offline
                     </span>
                   )}
                   {server.rank && (
-                    <span className="bg-yellow-500/20 text-yellow-400 px-3 py-2 rounded-full text-sm font-bold border border-yellow-500/30 shadow-lg" data-testid="text-server-rank">
+                    <span className="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded text-sm font-medium" data-testid="text-server-rank">
                       #{server.rank}
                     </span>
                   )}
@@ -142,39 +141,19 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
                   <span>•</span>
                   <span data-testid="text-server-game">{server.game}</span>
                   <span>•</span>
-                  <div className={server.status === 'online' ? "text-white font-medium" : "text-red-400 font-medium"}>
-                    <div className="flex items-center space-x-3">
-                      <Users size={16} className="text-blue-400" />
-                      <span data-testid="text-current-players" className="text-lg font-bold">
-                        {server.players}
+                  <span className={server.status === 'online' ? "text-white font-medium" : "text-red-400 font-medium"}>
+                    <span data-testid="text-current-players">{server.players}</span> / 
+                    <span data-testid="text-max-players">{server.maxPlayers}</span> players
+                    {/* Premium Players Indicator */}
+                    {premiumPlayerCount > 0 && (
+                      <span className="inline-flex items-center ml-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-medium" data-testid="premium-player-count" title="Anonymous premium players online">
+                        +{premiumPlayerCount}
                       </span>
-                      <span className="text-gray-400">/</span>
-                      <span data-testid="text-max-players" className="text-lg">
-                        {server.maxPlayers}
-                      </span>
-                      <span className="text-gray-400">players</span>
-                      {/* Premium Players Indicator */}
-                      {premiumPlayerCount > 0 && (
-                        <span className="inline-flex items-center bg-orange-500 text-white text-xs px-3 py-1 rounded-full font-bold shadow-lg" data-testid="premium-player-count" title="Anonymous premium players online">
-                          +{premiumPlayerCount} premium
-                        </span>
-                      )}
-                      {server.status !== 'online' && (
-                        <span className="text-xs text-red-400">(Last Known)</span>
-                      )}
-                    </div>
-                    {/* Player Count Progress Bar */}
-                    <div className="mt-2">
-                      <Progress 
-                        value={(server.players / server.maxPlayers) * 100} 
-                        className="h-2 bg-gray-700"
-                      />
-                      <div className="flex justify-between text-xs text-gray-400 mt-1">
-                        <span>{((server.players / server.maxPlayers) * 100).toFixed(1)}% full</span>
-                        <span>{server.maxPlayers - server.players} slots available</span>
-                      </div>
-                    </div>
-                  </div>
+                    )}
+                    {server.status !== 'online' && (
+                      <span className="text-xs text-red-400 ml-2">(Last Known)</span>
+                    )}
+                  </span>
                 </div>
                 {/* Offline Warning */}
                 {server.status !== 'online' && (
@@ -322,19 +301,16 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
 
       {/* Quick Actions */}
       <div className="lg:col-span-2">
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 rounded-xl shadow-2xl h-full hover:shadow-3xl transition-all duration-300">
-          <CardContent className="p-8">
-            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              Server Actions
-            </h3>
-            <div className="space-y-4">
+        <Card className="bg-surface border-gray-700 h-full">
+          <CardContent className="p-6">
+            <h3 className="text-lg font-semibold mb-4">Server Actions</h3>
+            <div className="space-y-3">
               <Button 
-                className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold shadow-lg transition-all duration-200 hover:shadow-xl"
+                className="w-full bg-primary hover:bg-blue-600 text-white"
                 onClick={handleViewOnBattleMetrics}
                 data-testid="button-view-battlemetrics"
               >
-                <ExternalLink className="mr-3" size={18} />
+                <ExternalLink className="mr-2" size={16} />
                 View on BattleMetrics
               </Button>
               
@@ -342,30 +318,31 @@ export function ServerOverview({ server, autoRefresh, onAutoRefreshChange, premi
 
               {server.mapInfo && (server.mapInfo.imageUrl || server.mapInfo.thumbnailUrl) && (
                 <Button 
-                  className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white font-bold shadow-lg transition-all duration-200 hover:shadow-xl disabled:opacity-50"
+                  className="w-full bg-surface-variant hover:bg-gray-600 text-white"
+                  variant="outline"
                   onClick={handleShowMapImage}
                   disabled={mapImageLoading}
                   data-testid="button-show-map"
                 >
                   {mapImageLoading ? (
-                    <Download className="mr-3 animate-spin" size={18} />
+                    <Download className="mr-2 animate-spin" size={16} />
                   ) : (
-                    <Image className="mr-3" size={18} />
+                    <Image className="mr-2" size={16} />
                   )}
                   {mapImageLoading ? "Loading..." : "View Map Image"}
                 </Button>
               )}
               {server.mapInfo?.url && (
                 <Button 
-                  className="w-full h-12 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-bold shadow-lg transition-all duration-200 hover:shadow-xl disabled:opacity-50"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={handleFetchHighResMap}
                   disabled={fetchingHighRes}
                   data-testid="button-fetch-highres-map"
                 >
                   {fetchingHighRes ? (
-                    <Download className="mr-3 animate-spin" size={18} />
+                    <Download className="mr-2 animate-spin" size={16} />
                   ) : (
-                    <Download className="mr-3" size={18} />
+                    <Download className="mr-2" size={16} />
                   )}
                   {fetchingHighRes ? "Fetching..." : "Fetch High-Res Map"}
                 </Button>
