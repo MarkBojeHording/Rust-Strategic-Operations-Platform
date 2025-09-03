@@ -920,7 +920,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Database metrics endpoint
   app.get("/api/database/metrics", async (req, res) => {
     try {
+      // Check if DATABASE_URL is set
+      if (!process.env.DATABASE_URL) {
+        console.error("DATABASE_URL not found for metrics endpoint");
+        return res.status(503).json({ error: "Database not configured" });
+      }
+
       const { db } = await import("./db");
+
+      // Test basic connectivity first
+      try {
+        await db.execute(`SELECT 1 as test`);
+      } catch (dbError) {
+        console.error("Database connectivity test failed:", dbError);
+        return res.status(503).json({ error: "Database connection failed", details: (dbError as Error).message });
+      }
 
       // Check if tables exist first
       const tablesExistQuery = `
@@ -1039,7 +1053,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error fetching database metrics:", error);
-      res.status(500).json({ error: "Failed to fetch database metrics" });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+      console.error("Database metrics error details:", { message: errorMessage, stack: errorStack });
+      res.status(500).json({ 
+        error: "Failed to fetch database metrics", 
+        details: errorMessage
+      });
     }
   });
 
