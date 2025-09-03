@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -81,7 +81,7 @@ export default function ServersPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const addErrorMessage = (message: string, source: string, type: 'error' | 'warning' = 'error') => {
+  const addErrorMessage = useCallback((message: string, source: string, type: 'error' | 'warning' = 'error') => {
     const newError: ErrorMessage = {
       id: Date.now().toString(),
       message,
@@ -90,7 +90,7 @@ export default function ServersPage() {
       source
     };
     setErrorMessages(prev => [newError, ...prev].slice(0, 50)); // Keep only last 50 errors
-  };
+  }, []);
 
   const clearErrorMessages = () => {
     setErrorMessages([]);
@@ -122,11 +122,13 @@ export default function ServersPage() {
     },
   });
 
-  // Handle users error
-  if (usersError && !usersLoading) {
-    const errorMsg = usersError instanceof Error ? usersError.message : 'Failed to fetch users';
-    addErrorMessage(errorMsg, 'Users Query');
-  }
+  // Handle users error with useEffect to prevent infinite renders
+  useEffect(() => {
+    if (usersError && !usersLoading) {
+      const errorMsg = usersError instanceof Error ? usersError.message : 'Failed to fetch users';
+      addErrorMessage(errorMsg, 'Users Query');
+    }
+  }, [usersError, usersLoading]);
 
   // Fetch teams
   const { data: teams = [], isLoading: teamsLoading, error: teamsError } = useQuery({
@@ -138,11 +140,13 @@ export default function ServersPage() {
     },
   });
 
-  // Handle teams error
-  if (teamsError && !teamsLoading) {
-    const errorMsg = teamsError instanceof Error ? teamsError.message : 'Failed to fetch teams';
-    addErrorMessage(errorMsg, 'Teams Query');
-  }
+  // Handle teams error with useEffect to prevent infinite renders
+  useEffect(() => {
+    if (teamsError && !teamsLoading) {
+      const errorMsg = teamsError instanceof Error ? teamsError.message : 'Failed to fetch teams';
+      addErrorMessage(errorMsg, 'Teams Query');
+    }
+  }, [teamsError, teamsLoading]);
 
   // User form
   const userForm = useForm<z.infer<typeof createUserSchema>>({

@@ -1,0 +1,61 @@
+[vite] connecting...
+[vite] connected.
+Servers data fetched at 2025-09-03T04:06:57.323Z : 
+Array []
+Database metrics query error: 
+Error {}
+
+Database metrics query retry attempt 0: 
+Error {}
+Database metrics query error: 
+Error {}
+
+Database metrics query retry attempt 1: 
+Error {}
+Database metrics query error: 
+Error {}
+
+Database metrics query retry attempt 2: 
+Error {}
+Too many re-renders. React limits the number of renders to prevent an infinite loop.
+Global error: 
+Error {}
+
+Message: Uncaught Error: Too many re-renders. React limits the number of renders to prevent an infinite loop.
+Source: https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/chunk-WERSD76P.js?v=d20db22d Line: 11555 Column: 17
+Too many re-renders. React limits the number of renders to prevent an infinite loop.
+Global error: 
+Error {}
+
+Message: Uncaught Error: Too many re-renders. React limits the number of renders to prevent an infinite loop.
+Source: https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/chunk-WERSD76P.js?v=d20db22d Line: 11555 Column: 17
+The above error occurred in the <ServersPage> component:
+
+    at ServersPage (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/src/pages/servers.tsx:42:43)
+    at Route (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/wouter.js?v=d20db22d:323:16)
+    at Switch (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/wouter.js?v=d20db22d:379:17)
+    at Router (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/src/App.tsx?v=aEFE6RGZ16O49Pa8G2VuD:32:42)
+    at Provider (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/chunk-O46BVKQA.js?v=d20db22d:48:15)
+    at TooltipProvider (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=d20db22d:2214:5)
+    at QueryClientProvider (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/@fs/home/runner/workspace/Rust%20Server%20Operations%20Center/node_modules/.vite/deps/@tanstack_react-query.js?v=d20db22d:2805:3)
+    at ErrorBoundary (https://2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt.sisko.replit.dev/src/components/error-boundary.tsx:20:5)
+    at App
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+ErrorBoundary caught an error: 
+Error {}
+ 
+Object {componentStack: "↵    at ServersPage…"}
+
+Servers data fetched at 2025-09-03T04:09:25.044Z : 
+Array []
+Database metrics query error: 
+Error {}
+
+Database metrics query retry attempt 0: 
+Error {}
+Database metrics query error: 
+Error {}
+
+Database metrics query retry attempt 1: 
+Error {}
