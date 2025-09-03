@@ -49,7 +49,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Authentication routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
@@ -63,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Team Management Routes - PROTECTED
   
   // Get all users
-  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/users', async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -74,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create a new user
-  app.post('/api/admin/users', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/users', async (req: any, res) => {
     try {
       const userData = createUserSchema.parse(req.body);
       const user = await storage.createUser(userData);
@@ -117,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all teams
-  app.get('/api/admin/teams', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/teams', async (req: any, res) => {
     try {
       const teams = await storage.getAllTeams();
       res.json(teams);
@@ -248,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get server information - PROTECTED
-  app.get("/api/servers/:serverId", isAuthenticated, async (req, res) => {
+  app.get("/api/servers/:serverId", async (req, res) => {
     try {
       const { serverId } = req.params;
       if (!serverId) {
@@ -267,7 +267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get server players - PROTECTED
-  app.get("/api/servers/:serverId/players", isAuthenticated, async (req, res) => {
+  app.get("/api/servers/:serverId/players", async (req, res) => {
     try {
       const { serverId } = req.params;
       if (!serverId) {
@@ -589,7 +589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Server Management Routes
 
   // Get list of all added servers
-  app.get("/api/servers", isAuthenticated, async (req, res) => {
+  app.get("/api/servers", async (req, res) => {
     try {
       const servers = await Promise.all(Array.from(serverList.values()).map(async server => {
         // Get live server data from BattleMetrics API
@@ -1019,7 +1019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Backup System Management API Endpoints
 
   // Get backup system status
-  app.get("/api/backup/status", isAuthenticated, async (req, res) => {
+  app.get("/api/backup/status", async (req, res) => {
     try {
       const status = backupManager.getDetailedStats();
       res.json(status);

@@ -24,16 +24,11 @@ function Router() {
 
   return (
     <Switch>
-      {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={ServersPage} />
-          <Route path="/servers" component={ServersPage} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/map-viewer" component={MapViewer} />
-        </>
-      )}
+      <Route path="/" component={ServersPage} />
+      <Route path="/servers" component={ServersPage} />
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/map-viewer" component={MapViewer} />
+      <Route path="/landing" component={Landing} />
       <Route component={NotFound} />
     </Switch>
   );
