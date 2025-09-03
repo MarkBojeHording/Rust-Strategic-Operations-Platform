@@ -130,10 +130,10 @@ export default function MapViewer() {
   const selectedServer = servers?.find(s => s.id === serverId);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
+    <div className="min-h-screen bg-slate-900 p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <Card>
+        <Card className="bg-slate-800 border-slate-700">
           <CardHeader>
             <div className="flex items-center gap-3">
               <Link href="/">
@@ -145,9 +145,9 @@ export default function MapViewer() {
               <div className="flex-1">
                 <CardTitle className="flex items-center gap-2">
                   <Map className="w-6 h-6 text-orange-500" />
-                  High-Resolution Map Viewer
+                  <span className="text-slate-100">High-Resolution Map Viewer</span>
                 </CardTitle>
-                <p className="text-muted-foreground">
+                <p className="text-slate-300">
                   View detailed server maps with tile-based high-resolution processing
                 </p>
               </div>
@@ -156,7 +156,7 @@ export default function MapViewer() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="server-id">Server ID</Label>
+                <Label htmlFor="server-id" className="text-slate-300">Server ID</Label>
                 <Input
                   id="server-id"
                   value={serverId}
@@ -169,7 +169,7 @@ export default function MapViewer() {
                 <Button 
                   onClick={loadMap} 
                   disabled={mapLoading || !serverId}
-                  className="w-full"
+                  className="w-full bg-blue-600 hover:bg-blue-700"
                   data-testid="button-load-map"
                 >
                   {mapLoading ? (
@@ -190,7 +190,7 @@ export default function MapViewer() {
                   onClick={downloadMap}
                   disabled={!mapImageUrl}
                   variant="outline"
-                  className="w-full"
+                  className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
                   data-testid="button-download-map"
                 >
                   <Download className="w-4 h-4 mr-2" />
@@ -214,29 +214,29 @@ export default function MapViewer() {
 
             {/* Map Info */}
             {mapInfo && (
-              <Card className="bg-muted/50">
+              <Card className="bg-slate-800/50 border-slate-700">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Info className="w-4 h-4" />
-                    <span className="font-medium">Map Storage Info</span>
+                    <span className="font-medium text-slate-200">Map Storage Info</span>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Total Maps:</span>
+                      <span className="text-slate-400">Total Maps:</span>
                       <div className="font-medium">{mapInfo.totalMaps}</div>
                     </div>
                     {mapInfo.maps?.[0] && (
                       <>
                         <div>
-                          <span className="text-muted-foreground">Seed:</span>
+                          <span className="text-slate-400">Seed:</span>
                           <div className="font-medium">{mapInfo.maps[0].seed}</div>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Size:</span>
+                          <span className="text-slate-400">Size:</span>
                           <div className="font-medium">{mapInfo.maps[0].size}</div>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Fetched:</span>
+                          <span className="text-slate-400">Fetched:</span>
                           <div className="font-medium">
                             {new Date(mapInfo.maps[0].fetchedAt).toLocaleDateString()}
                           </div>
@@ -251,7 +251,7 @@ export default function MapViewer() {
         </Card>
 
         {/* Map Display */}
-        <Card>
+        <Card className="bg-slate-800 border-slate-700">
           <CardHeader>
             <CardTitle>Map Image</CardTitle>
           </CardHeader>
@@ -317,7 +317,7 @@ export default function MapViewer() {
 
         {/* Available Servers */}
         {servers && servers.length > 0 && (
-          <Card>
+          <Card className="bg-slate-800 border-slate-700">
             <CardHeader>
               <CardTitle>Available Servers</CardTitle>
             </CardHeader>
