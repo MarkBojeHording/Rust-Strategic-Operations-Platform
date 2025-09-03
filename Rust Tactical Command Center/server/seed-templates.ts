@@ -49,12 +49,13 @@ const standardTemplates = [
 
 export async function seedReportTemplates() {
   try {
-    // Create report_templates table if it doesn't exist
+    // Create report_templates table if it doesn't exist with proper schema
     await db.execute(`
       CREATE TABLE IF NOT EXISTS report_templates (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        template TEXT NOT NULL,
+        name TEXT NOT NULL,
+        report_type TEXT NOT NULL,
+        template JSONB NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

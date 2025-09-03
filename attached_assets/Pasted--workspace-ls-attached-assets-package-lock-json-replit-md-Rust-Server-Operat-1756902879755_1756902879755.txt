@@ -1,0 +1,66 @@
+~/workspace$ ls
+ attached_assets   package-lock.json   replit.md                 'Rust Server Operations Center'   workplan.md
+ package.json      README.md          'Rust Base Design Studio'  'Rust Tactical Command Center'
+~/workspace$ cd 'Rust Tactical Command Center'
+~/workspace/Rust Tactical Command Center$ npm run dev
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+🎯 [ProfileTracker] Initialized with team-aware player tracking
+🎯 [ProfileTracker] Initialized with team-aware player tracking
+Connecting to BattleMetrics WebSocket for persistent tracking...
+(node:1117) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Connected to BattleMetrics WebSocket (persistent)
+✓ Report templates table created/verified
+Failed to seed report templates: error: column "report_type" does not exist
+    at file:///home/runner/workspace/Rust%20Tactical%20Command%20Center/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/Rust Tactical Command Center/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DatabaseStorage.getReportTemplateByType (/home/runner/workspace/Rust Tactical Command Center/server/storage.ts:258:24)
+    at async seedReportTemplates (/home/runner/workspace/Rust Tactical Command Center/server/seed-templates.ts:64:24)
+    at async <anonymous> (/home/runner/workspace/Rust Tactical Command Center/server/index.ts:62:5) {
+  length: 111,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '22',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3722',
+  routine: 'errorMissingColumn'
+}
+✓ Report templates seeded successfully
+Connecting to BattleMetrics WebSocket for persistent tracking...
+BattleMetrics WebSocket manager initialized
+12:34:28 PM [express] Setting up Vite development server...
+12:34:28 PM [express] Vite development server setup complete
+node:events:502
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EADDRINUSE: address already in use 0.0.0.0:5000
+    at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+    at listenInCluster (node:net:1965:12)
+    at doListen (node:net:2139:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1944:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 5000
+}
+
+Node.js v20.19.3
