@@ -199,7 +199,7 @@ export default function Dashboard() {
       <main className="container mx-auto px-6 py-8">
         {/* Connection Status */}
         <div className="mb-6">
-          <Card className="bg-white border-gray-200 shadow-sm">
+          <Card className="bg-gray-100 border-gray-200 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -219,7 +219,7 @@ export default function Dashboard() {
         {/* Loading State */}
         {isLoading && (
           <div className="mb-8">
-            <Card className="bg-white border-gray-200 shadow-sm">
+            <Card className="bg-gray-100 border-gray-200 shadow-sm">
               <CardContent className="p-8">
                 <div className="flex flex-col items-center space-y-4">
                   <Loader2 className="animate-spin h-12 w-12 text-blue-500" />
