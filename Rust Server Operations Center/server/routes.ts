@@ -359,8 +359,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get session history for a specific player profile - PROTECTED
-  app.get("/api/profiles/:profileId/sessions", isAuthenticated, async (req, res) => {
+  // Get session history for a specific player profile
+  app.get("/api/profiles/:profileId/sessions", async (req, res) => {
     try {
       const { profileId } = req.params;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
