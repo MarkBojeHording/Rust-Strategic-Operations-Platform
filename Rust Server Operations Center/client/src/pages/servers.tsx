@@ -826,10 +826,10 @@ export default function ServersPage() {
       {/* Right Half - Split into Top and Bottom */}
       <div className="grid grid-rows-2">
         {/* Top Right - Team Admin Section */}
-        <div className="bg-gray-900 border-l border-gray-700">
+        <div className="bg-gray-100 border-l border-gray-200">
           <div className="p-6 h-full overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">Team Admin</h2>
+              <h2 className="text-xl font-bold text-gray-900">Team Admin</h2>
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -861,12 +861,12 @@ export default function ServersPage() {
               <TabsContent value="users" className="space-y-2 mt-4">
                 {/* Create User Form */}
                 {showCreateUser && (
-                  <Card className="bg-gray-800 border-gray-700">
+                  <Card className="bg-gray-50 border-gray-200">
                     <CardContent className="p-4">
                       <Form {...userForm}>
                         <form onSubmit={userForm.handleSubmit(data => createUserMutation.mutate(data))} className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-medium text-white">Create User</h3>
+                            <h3 className="text-sm font-medium text-gray-900">Create User</h3>
                             <Button 
                               type="button" 
                               variant="ghost" 
@@ -882,11 +882,11 @@ export default function ServersPage() {
                             name="username"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-gray-300">Username</FormLabel>
+                                <FormLabel className="text-gray-700">Username</FormLabel>
                                 <FormControl>
                                   <Input 
                                     placeholder="Enter username" 
-                                    className="bg-gray-700 border-gray-600 text-white"
+                                    className="bg-white border-gray-300 text-gray-900"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -900,12 +900,12 @@ export default function ServersPage() {
                             name="password"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-gray-300">Password</FormLabel>
+                                <FormLabel className="text-gray-700">Password</FormLabel>
                                 <FormControl>
                                   <Input 
                                     type="password"
                                     placeholder="Enter password" 
-                                    className="bg-gray-700 border-gray-600 text-white"
+                                    className="bg-white border-gray-300 text-gray-900"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -930,14 +930,14 @@ export default function ServersPage() {
                 {/* Users List */}
                 <div className="space-y-1">
                   {usersLoading ? (
-                    <div className="text-gray-400 text-sm">Loading users...</div>
+                    <div className="text-gray-600 text-sm">Loading users...</div>
                   ) : users.length === 0 ? (
-                    <div className="text-gray-500 text-sm">No users found</div>
+                    <div className="text-gray-600 text-sm">No users found</div>
                   ) : (
                     users.map((user: User) => (
-                      <div key={user.id} className="flex items-center justify-between py-2 px-3 bg-gray-800/50 rounded border border-gray-700/50 hover:bg-gray-800/70 transition-colors">
+                      <div key={user.id} className="flex items-center justify-between py-2 px-3 bg-white rounded border border-gray-200 hover:bg-gray-50 transition-colors">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="text-sm font-medium text-white truncate">
+                          <div className="text-sm font-medium text-gray-900 truncate">
                             {user.username}
                           </div>
                           <Badge 
@@ -952,15 +952,15 @@ export default function ServersPage() {
                           >
                             {user.role}
                           </Badge>
-                          <div className="flex items-center gap-1 bg-gray-700/50 px-2 py-1 rounded">
-                            <div className="text-xs text-gray-300 font-mono">
+                          <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+                            <div className="text-xs text-gray-700 font-mono">
                               {visiblePasswords.has(user.id) ? user.password : '••••••••'}
                             </div>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => togglePasswordVisibility(user.id)}
-                              className="text-gray-400 hover:text-gray-200 h-4 w-4 p-0"
+                              className="text-gray-600 hover:text-gray-800 h-4 w-4 p-0"
                               data-testid={`button-toggle-password-${user.id}`}
                             >
                               {visiblePasswords.has(user.id) ? <EyeOff size={10} /> : <Eye size={10} />}
@@ -972,7 +972,7 @@ export default function ServersPage() {
                           size="sm"
                           onClick={() => deleteUserMutation.mutate(user.id)}
                           disabled={deleteUserMutation.isPending}
-                          className="text-gray-400 hover:text-red-400 p-1"
+                          className="text-gray-600 hover:text-red-500 p-1"
                           data-testid={`button-delete-user-${user.id}`}
                         >
                           <Trash2 size={12} />
@@ -986,12 +986,12 @@ export default function ServersPage() {
               <TabsContent value="teams" className="space-y-2 mt-4">
                 {/* Create Team Form */}
                 {showCreateTeam && (
-                  <Card className="bg-gray-800 border-gray-700">
+                  <Card className="bg-gray-50 border-gray-200">
                     <CardContent className="p-4">
                       <Form {...teamForm}>
                         <form onSubmit={teamForm.handleSubmit(data => createTeamMutation.mutate(data))} className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-medium text-white">Create Team</h3>
+                            <h3 className="text-sm font-medium text-gray-900">Create Team</h3>
                             <Button 
                               type="button" 
                               variant="ghost" 
@@ -1007,11 +1007,11 @@ export default function ServersPage() {
                             name="name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-gray-300">Team Name</FormLabel>
+                                <FormLabel className="text-gray-700">Team Name</FormLabel>
                                 <FormControl>
                                   <Input 
                                     placeholder="Development Team" 
-                                    className="bg-gray-700 border-gray-600 text-white"
+                                    className="bg-white border-gray-300 text-gray-900"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -1025,11 +1025,11 @@ export default function ServersPage() {
                             name="description"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-gray-300">Description</FormLabel>
+                                <FormLabel className="text-gray-700">Description</FormLabel>
                                 <FormControl>
                                   <Input 
                                     placeholder="Team description (optional)" 
-                                    className="bg-gray-700 border-gray-600 text-white"
+                                    className="bg-white border-gray-300 text-gray-900"
                                     {...field} 
                                   />
                                 </FormControl>
@@ -1054,20 +1054,20 @@ export default function ServersPage() {
                 {/* Teams List */}
                 <div className="space-y-2">
                   {teamsLoading ? (
-                    <div className="text-gray-400 text-sm">Loading teams...</div>
+                    <div className="text-gray-600 text-sm">Loading teams...</div>
                   ) : teams.length === 0 ? (
-                    <div className="text-gray-500 text-sm">No teams found</div>
+                    <div className="text-gray-600 text-sm">No teams found</div>
                   ) : (
                     teams.map((team: Team) => (
-                      <Card key={team.id} className="bg-gray-800 border-gray-700">
+                      <Card key={team.id} className="bg-white border-gray-200 shadow-sm">
                         <CardContent className="p-3">
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-white truncate">
+                              <div className="text-sm font-medium text-gray-900 truncate">
                                 {team.name}
                               </div>
                               {team.description && (
-                                <div className="text-xs text-gray-400 truncate">
+                                <div className="text-xs text-gray-600 truncate">
                                   {team.description}
                                 </div>
                               )}
@@ -1079,7 +1079,7 @@ export default function ServersPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-gray-400 hover:text-blue-400 p-1"
+                                className="text-gray-600 hover:text-blue-500 p-1"
                                 data-testid={`button-manage-team-${team.id}`}
                               >
                                 <Settings size={12} />
@@ -1089,7 +1089,7 @@ export default function ServersPage() {
                                 size="sm"
                                 onClick={() => deleteTeamMutation.mutate(team.id)}
                                 disabled={deleteTeamMutation.isPending}
-                                className="text-gray-400 hover:text-red-400 p-1"
+                                className="text-gray-600 hover:text-red-500 p-1"
                                 data-testid={`button-delete-team-${team.id}`}
                               >
                                 <Trash2 size={12} />
@@ -1107,16 +1107,16 @@ export default function ServersPage() {
         </div>
 
         {/* Bottom Right - Error Message Display */}
-        <div className="bg-gray-950 border-l border-t border-gray-700">
+        <div className="bg-gray-100 border-l border-t border-gray-200">
           <div className="p-6 h-full flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">Error Messages</h2>
+              <h2 className="text-xl font-bold text-gray-900">Error Messages</h2>
               {errorMessages.length > 0 && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={clearErrorMessages}
-                  className="text-gray-400 hover:text-white"
+                  className="text-gray-600 hover:text-gray-900"
                 >
                   Clear All
                 </Button>
@@ -1125,7 +1125,7 @@ export default function ServersPage() {
             
             <div className="flex-1 overflow-y-auto">
               {errorMessages.length === 0 ? (
-                <div className="text-gray-500 text-sm">No error messages</div>
+                <div className="text-gray-600 text-sm">No error messages</div>
               ) : (
                 <div className="space-y-2">
                   {errorMessages.map((error) => (
@@ -1149,7 +1149,7 @@ export default function ServersPage() {
                           }`}>
                             {error.source}
                           </div>
-                          <div className="text-sm text-gray-300 mt-1 break-words">
+                          <div className="text-sm text-gray-700 mt-1 break-words">
                             {error.message}
                           </div>
                           <div className="text-xs text-gray-500 mt-1">
