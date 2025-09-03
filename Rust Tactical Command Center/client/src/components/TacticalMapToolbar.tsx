@@ -116,12 +116,11 @@ const TacticalMapToolbar = memo(({ onButtonClick, onMenuOptionClick, progression
                             onClick={(e) => {
                               e.preventDefault()
                               e.stopPropagation()
+                              setShowMenuDropdown(false)
                               if (option === 'Admin control') {
                                 setAdminModalOpen(true)
-                              } else if (option === 'Team management') {
-                                setTeamManagementModalOpen(true)
-                              } else if (option === 'Settings') {
-                                // Assuming handleMenuOptionClick can handle 'Settings'
+                              } else {
+                                // Use handleMenuOptionClick for all other options
                                 handleMenuOptionClick(option)
                               }
                             }}
