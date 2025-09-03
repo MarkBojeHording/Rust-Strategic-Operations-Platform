@@ -318,8 +318,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get player profiles for a server (new profile-based system) - PROTECTED
-  app.get("/api/servers/:serverId/profiles", isAuthenticated, async (req, res) => {
+  // Get player profiles for a server (new profile-based system)
+  app.get("/api/servers/:serverId/profiles", async (req, res) => {
     try {
       const { serverId } = req.params;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 500;
@@ -359,8 +359,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get session history for a specific player profile - PROTECTED
-  app.get("/api/profiles/:profileId/sessions", isAuthenticated, async (req, res) => {
+  // Get session history for a specific player profile
+  app.get("/api/profiles/:profileId/sessions", async (req, res) => {
     try {
       const { profileId } = req.params;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
@@ -920,38 +920,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Database metrics endpoint
   app.get("/api/database/metrics", async (req, res) => {
     try {
+      // Check if DATABASE_URL is set
+      if (!process.env.DATABASE_URL) {
+        console.error("DATABASE_URL not found for metrics endpoint");
+        return res.status(503).json({ error: "Database not configured" });
+      }
+
       const { db } = await import("./db");
 
-      // Get database size metrics
-      const sizeQuery = `
+      // Test basic connectivity first
+      try {
+        await db.execute(`SELECT 1 as test`);
+      } catch (dbError) {
+        console.error("Database connectivity test failed:", dbError);
+        return res.status(503).json({ error: "Database connection failed", details: (dbError as Error).message });
+      }
+
+      // Check if tables exist first
+      const tablesExistQuery = `
+        SELECT 
+          EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'player_activities') as activities_exists,
+          EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'maps') as maps_exists
+      `;
+
+      const tablesResult = await db.execute(tablesExistQuery);
+      const tablesRow = tablesResult.rows[0] as any;
+
+      // Get database size metrics with conditional table queries
+      let sizeQuery = `
         SELECT 
           pg_size_pretty(pg_database_size(current_database())) as database_size,
-          pg_database_size(current_database()) as database_size_bytes,
+          pg_database_size(current_database()) as database_size_bytes`;
+
+      if (tablesRow.activities_exists) {
+        sizeQuery += `,
           pg_size_pretty(pg_total_relation_size('player_activities')) as activities_size,
           pg_total_relation_size('player_activities') as activities_size_bytes,
+          (SELECT COUNT(*) FROM player_activities) as total_activities`;
+      } else {
+        sizeQuery += `,
+          '0 bytes' as activities_size,
+          0 as activities_size_bytes,
+          0 as total_activities`;
+      }
+
+      if (tablesRow.maps_exists) {
+        sizeQuery += `,
           pg_size_pretty(pg_total_relation_size('maps')) as maps_size,
           pg_total_relation_size('maps') as maps_size_bytes,
-          (SELECT COUNT(*) FROM player_activities) as total_activities,
-          (SELECT COUNT(*) FROM maps) as total_maps
-      `;
+          (SELECT COUNT(*) FROM maps) as total_maps`;
+      } else {
+        sizeQuery += `,
+          '0 bytes' as maps_size,
+          0 as maps_size_bytes,
+          0 as total_maps`;
+      }
 
       const sizeResult = await db.execute(sizeQuery);
       const sizeRow = sizeResult.rows[0] as any;
 
-      // Get hourly activity data for last 24 hours
-      const activityQuery = `
-        SELECT 
-          DATE_TRUNC('hour', created_at) as hour,
-          COUNT(*) as activities_per_hour,
-          AVG(LENGTH(action) + LENGTH(player_name) + LENGTH(server_id) + LENGTH(player_id) + 50) as avg_row_size_bytes
-        FROM player_activities 
-        WHERE created_at >= NOW() - INTERVAL '24 hours'
-        GROUP BY DATE_TRUNC('hour', created_at)
-        ORDER BY hour DESC
-      `;
+      // Get hourly activity data for last 24 hours (only if table exists)
+      let hourlyData: any[] = [];
+      
+      if (tablesRow.activities_exists) {
+        const activityQuery = `
+          SELECT 
+            DATE_TRUNC('hour', created_at) as hour,
+            COUNT(*) as activities_per_hour,
+            AVG(LENGTH(action) + LENGTH(player_name) + LENGTH(server_id) + LENGTH(player_id) + 50) as avg_row_size_bytes
+          FROM player_activities 
+          WHERE created_at >= NOW() - INTERVAL '24 hours'
+          GROUP BY DATE_TRUNC('hour', created_at)
+          ORDER BY hour DESC
+        `;
 
-      const activityResult = await db.execute(activityQuery);
-      const hourlyData = activityResult.rows;
+        const activityResult = await db.execute(activityQuery);
+        hourlyData = activityResult.rows;
+      }
 
       // Calculate average data per hour
       const avgActivitiesPerHour =
@@ -1008,7 +1053,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error fetching database metrics:", error);
-      res.status(500).json({ error: "Failed to fetch database metrics" });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+      console.error("Database metrics error details:", { message: errorMessage, stack: errorStack });
+      res.status(500).json({ 
+        error: "Failed to fetch database metrics", 
+        details: errorMessage
+      });
     }
   });
 

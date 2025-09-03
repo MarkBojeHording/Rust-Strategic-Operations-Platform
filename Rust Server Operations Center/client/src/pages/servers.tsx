@@ -83,7 +83,7 @@ export default function ServersPage() {
 
   const addErrorMessage = useCallback((message: string, source: string, type: 'error' | 'warning' = 'error') => {
     const newError: ErrorMessage = {
-      id: Date.now().toString(),
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique keys
       message,
       type,
       timestamp: new Date(),
@@ -329,19 +329,44 @@ export default function ServersPage() {
       try {
         const res = await fetch('/api/database/metrics');
         if (!res.ok) {
-          throw new Error(`Database metrics fetch failed: ${res.status}`);
+          // Try to get the actual error message from the server response
+          let serverErrorMessage = `HTTP ${res.status}`;
+          try {
+            const errorResponse = await res.json();
+            serverErrorMessage = errorResponse.error || errorResponse.details || serverErrorMessage;
+            if (errorResponse.details && errorResponse.details !== errorResponse.error) {
+              serverErrorMessage += `: ${errorResponse.details}`;
+            }
+          } catch (parseError) {
+            // If response isn't JSON, use status text
+            serverErrorMessage = `HTTP ${res.status}: ${res.statusText}`;
+          }
+          
+          const fullError = new Error(`Database metrics fetch failed: ${serverErrorMessage}`);
+          console.error('Database metrics query error - Server response:', serverErrorMessage);
+          throw fullError;
         }
         const data = await res.json();
         console.log('Database metrics:', data);
         return data;
       } catch (error) {
-        console.error('Database metrics query error:', error);
+        // Enhanced error logging with more details
+        console.error('Database metrics query error:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          name: error instanceof Error ? error.name : 'Unknown',
+          stack: error instanceof Error ? error.stack : 'No stack trace',
+          originalError: error
+        });
         throw error;
       }
     },
     refetchInterval: 30000, // Refresh every 30 seconds
     retry: (failureCount, error) => {
-      console.log(`Database metrics query retry attempt ${failureCount}:`, error);
+      console.log(`Database metrics query retry attempt ${failureCount}:`, {
+        attempt: failureCount,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorName: error instanceof Error ? error.name : 'Unknown'
+      });
       return failureCount < 1; // Reduce retries to prevent error cascades
     },
   });

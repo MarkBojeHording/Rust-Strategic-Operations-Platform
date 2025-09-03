@@ -1,0 +1,41 @@
+workspace$ git branch -r
+  origin/HEAD -> origin/master
+  origin/master
+~/workspace$ git pull origin master
+remote: Enumerating objects: 189, done.
+remote: Counting objects: 100% (189/189), done.
+remote: Compressing objects: 100% (34/34), done.
+remote: Total 161 (delta 131), reused 156 (delta 126), pack-reused 0 (from 0)
+Receiving objects: 100% (161/161), 39.49 KiB | 4.39 MiB/s, done.
+Resolving deltas: 100% (131/131), completed with 24 local objects.
+From https://github.com/MarkBojeHording/Rust-Strategic-Operations-Platform
+ * branch            master     -> FETCH_HEAD
+   5e57af2..53ca9bf  master     -> origin/master
+Updating e48774c..53ca9bf
+Fast-forward
+ .replit                                                                                    |  12 +-
+ Rust Server Operations Center/client/src/App.tsx                                           |  21 ++-
+ Rust Server Operations Center/client/src/components/navigation.tsx                         | 120 ++++++++++++
+ Rust Server Operations Center/client/src/components/player-profiles-list.tsx               |   6 +-
+ Rust Server Operations Center/client/src/components/server-overview.tsx                    |  48 ++---
+ Rust Server Operations Center/client/src/pages/dashboard.tsx                               |  28 +--
+ Rust Server Operations Center/client/src/pages/map-viewer.tsx                              |  34 ++--
+ Rust Server Operations Center/client/src/pages/servers.tsx                                 | 174 +++++++++--------
+ Rust Server Operations Center/server/replitAuth.ts                                         |   5 +
+ Rust Server Operations Center/server/routes.ts                                             |  25 ++-
+ Rust Tactical Command Center/client/src/components/TacticalMapToolbar.tsx                  |   7 +-
+ Rust Tactical Command Center/client/src/components/TeamManagementModal.tsx                 | 187 ++++++++++++++++--
+ Rust Tactical Command Center/server/routes.ts                                              | 143 ++++++++++++++
+ Rust Tactical Command Center/server/services/playerActivityTracker.ts                      | 461 +++++++++++++++++++++++++++++++++------------
+ Rust Tactical Command Center/server/services/websocketManager.ts                           | 145 ++++++++++----
+ Rust Tactical Command Center/server/storage.ts                                             | 220 +++++++++++++++++++++
+ Rust Tactical Command Center/shared/schema.ts                                              |  87 +++++++++
+ ...Servers-data-fetched-at-2025-09-03T04-06-57-323Z-Array--1756872578993_1756872578994.txt |  61 ++++++
+ ...pt-1-Error-Database-metrics-query-error-Error-Database--1756872766059_1756872766060.txt |  37 ++++
+ ...aa392ff-00-1nyzvp5xe69zt-sisko-replit-dev-src-component-1756874325653_1756874325653.txt |  29 +++
+ 20 files changed, 1497 insertions(+), 353 deletions(-)
+ create mode 100644 Rust Server Operations Center/client/src/components/navigation.tsx
+ create mode 100644 attached_assets/Pasted--vite-connecting-vite-connected-Servers-data-fetched-at-2025-09-03T04-06-57-323Z-Array--1756872578993_1756872578994.txt
+ create mode 100644 attached_assets/Pasted-Database-metrics-query-retry-attempt-1-Error-Database-metrics-query-error-Error-Database--1756872766059_1756872766060.txt
+ create mode 100644 attached_assets/Pasted-Source-https-2d72c2ca-c0ec-4e4f-9bca-99c36aa392ff-00-1nyzvp5xe69zt-sisko-replit-dev-src-component-1756874325653_1756874325653.txt
+~/workspace$ 
